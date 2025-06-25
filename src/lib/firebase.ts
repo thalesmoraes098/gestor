@@ -1,7 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,17 +12,28 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check for missing environment variables to provide a clearer error during build/startup
-const missingConfig = Object.entries(firebaseConfig).find(([key, value]) => !value);
-if (missingConfig) {
-  throw new Error(`Firebase config is missing required environment variable: ${missingConfig[0]}. Check your .env.local file or App Hosting environment variables.`);
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+
+// Initialize Firebase only if all config values are present.
+// This allows the build to succeed even if the env vars are not yet available.
+if (Object.values(firebaseConfig).every(v => !!v)) {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+} else {
+    // During the build process, these variables might be undefined.
+    // We create mock objects to allow the build to pass.
+    // The app will fail at runtime if the config is still missing, which is expected.
+    console.warn("Firebase config is missing. App will not function correctly. This is expected during the initial build for service account creation.");
+    app = {} as FirebaseApp;
+    auth = {} as Auth;
+    db = {} as Firestore;
+    storage = {} as FirebaseStorage;
 }
 
-
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
 
 export { app, auth, db, storage };

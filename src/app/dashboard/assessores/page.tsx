@@ -10,7 +10,7 @@ import { ReallocateClientsDialog } from "@/components/reallocate-clients-dialog"
 import { Filter, PlusCircle } from "lucide-react";
 import type { Advisor } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -133,24 +133,59 @@ export default function AssessoresPage() {
     }
   };
 
-  const handleReallocationConfirm = async (reallocationData: any) => {
-      if (dismissedAdvisor) {
-        try {
-          const advisorRef = doc(db, "advisors", dismissedAdvisor.id);
-          await updateDoc(advisorRef, { status: 'Demitido' });
-          toast({ title: 'Assessor Demitido', description: `O assessor ${dismissedAdvisor.name} foi demitido e a carteira reatribuída.` });
-        } catch (error) {
-          console.error("Error updating advisor status to dismissed: ", error);
-          toast({
-            variant: "destructive",
-            title: 'Erro ao demitir',
-            description: 'Não foi possível atualizar o status do assessor.',
-          });
+  const handleReallocationConfirm = async (reallocationData: { option: string; specificAdvisorId?: string }) => {
+    if (!dismissedAdvisor) return;
+
+    const batch = writeBatch(db);
+
+    try {
+        const donorsQuery = query(collection(db, "donors"), where("assessor", "==", dismissedAdvisor.name));
+        const donorsSnapshot = await getDocs(donorsQuery);
+
+        if (!donorsSnapshot.empty) {
+            if (reallocationData.option === 'company') {
+                donorsSnapshot.forEach(donorDoc => {
+                    batch.update(donorDoc.ref, { assessor: '' });
+                });
+            } else if (reallocationData.option === 'specific' && reallocationData.specificAdvisorId) {
+                const newAdvisor = activeAdvisors.find(a => a.id === reallocationData.specificAdvisorId);
+                if (newAdvisor) {
+                    donorsSnapshot.forEach(donorDoc => {
+                        batch.update(donorDoc.ref, { assessor: newAdvisor.name });
+                    });
+                }
+            } else if (reallocationData.option === 'automatic') {
+                const availableAdvisors = activeAdvisors.filter(a => a.id !== dismissedAdvisor.id);
+                if (availableAdvisors.length > 0) {
+                    let advisorIndex = 0;
+                    donorsSnapshot.forEach(donorDoc => {
+                        const newAdvisor = availableAdvisors[advisorIndex % availableAdvisors.length];
+                        batch.update(donorDoc.ref, { assessor: newAdvisor.name });
+                        advisorIndex++;
+                    });
+                }
+            }
         }
-      }
-      setIsReallocationDialogOpen(false);
-      setDismissedAdvisor(null);
-  }
+        
+        const advisorRef = doc(db, "advisors", dismissedAdvisor.id);
+        batch.update(advisorRef, { status: 'Demitido' });
+
+        await batch.commit();
+
+        toast({ title: 'Operação Concluída', description: `O assessor ${dismissedAdvisor.name} foi demitido e a carteira de clientes foi reatribuída com sucesso.` });
+
+    } catch (error) {
+        console.error("Error reallocating clients: ", error);
+        toast({
+            variant: "destructive",
+            title: 'Erro na Reatribuição',
+            description: 'Não foi possível reatribuir a carteira de clientes.',
+        });
+    }
+
+    setIsReallocationDialogOpen(false);
+    setDismissedAdvisor(null);
+  };
 
   const handleDialogChange = (open: boolean) => {
       setIsAdvisorDialogOpen(open);

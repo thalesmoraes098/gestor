@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format, getMonth, getYear } from 'date-fns';
+import { format } from 'date-fns';
 import { Download, ChevronsUpDown, Check } from 'lucide-react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PerformanceReportChart } from '@/components/dashboard-charts';
-import { savedClosingDay } from '@/lib/config';
-import type { Advisor, Messenger, Donation, Commission } from '@/lib/mock-data';
+import type { Advisor, Messenger, Donation } from '@/lib/mock-data';
 
 const reportSchema = z.object({
   collaboratorId: z.string({ required_error: 'Por favor, selecione um colaborador.' }),
@@ -51,6 +50,27 @@ export default function RelatoriosPage() {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [messengers, setMessengers] = useState<Messenger[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Settings
+  const [closingDay, setClosingDay] = useState('5');
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+        setLoadingSettings(true);
+        try {
+            const settingsRef = doc(db, "system_settings", "general");
+            const settingsSnap = await getDoc(settingsRef);
+            if (settingsSnap.exists()) {
+                setClosingDay(settingsSnap.data().closingDay || '5');
+            }
+        } catch (error) {
+            console.error("Error fetching settings, using default.", error);
+        }
+        setLoadingSettings(false);
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -106,10 +126,10 @@ export default function RelatoriosPage() {
 
     const monthIndex = parseInt(data.month, 10);
     const year = parseInt(data.year, 10);
-    const closingDay = parseInt(savedClosingDay, 10);
+    const closingDayNum = parseInt(closingDay, 10);
 
-    const startDate = new Date(year, monthIndex, closingDay + 1);
-    const endDate = new Date(year, monthIndex + 1, closingDay);
+    const startDate = new Date(year, monthIndex, closingDayNum + 1);
+    const endDate = new Date(year, monthIndex + 1, closingDayNum);
 
     const donationsInPeriod = donations.filter(d => {
       if (!d.paymentDate) return false;
@@ -219,105 +239,107 @@ export default function RelatoriosPage() {
         <CardHeader>
           <CardTitle>Gerar Relatório</CardTitle>
           <CardDescription>
-            Selecione um colaborador e o período para gerar o relatório em PDF. O período será calculado com base no dia de fechamento definido nas configurações (Dia {savedClosingDay}).
+            Selecione um colaborador e o período para gerar o relatório em PDF. O período será calculado com base no dia de fechamento definido nas configurações (Dia {closingDay}).
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? <p>Carregando dados...</p> : (
+          {loading || loadingSettings ? <p>Carregando dados...</p> : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  <FormField
-                    control={form.control}
-                    name="collaboratorId"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Colaborador</FormLabel>
-                          <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
-                              <PopoverTrigger asChild>
-                                  <FormControl>
-                                      <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
-                                          {field.value ? allCollaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
-                                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                      </Button>
-                                  </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                  <Command>
-                                      <CommandInput placeholder="Buscar colaborador..." />
-                                      <CommandList><CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
-                                      <CommandGroup>
-                                          {allCollaborators.map((c) => (
-                                              <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
-                                                  <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                  {c.name} ({c.type})
-                                              </CommandItem>
-                                          ))}
-                                      </CommandGroup>
-                                      </CommandList>
-                                  </Command>
-                              </PopoverContent>
-                          </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <fieldset disabled={loading || loadingSettings}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <FormField
+                      control={form.control}
+                      name="collaboratorId"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Colaborador</FormLabel>
+                            <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <FormControl>
+                                        <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                            {field.value ? allCollaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Buscar colaborador..." />
+                                        <CommandList><CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                                        <CommandGroup>
+                                            {allCollaborators.map((c) => (
+                                                <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
+                                                    <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                    {c.name} ({c.type})
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="month"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Mês</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o mês" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {months.map((month) => (
-                              <SelectItem key={month.value} value={month.value}>
-                                {month.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="month"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Mês</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o mês" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {months.map((month) => (
+                                <SelectItem key={month.value} value={month.value}>
+                                  {month.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="year"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Ano</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o ano" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {years.map((year) => (
-                              <SelectItem key={year} value={year}>
-                                {year}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <FormField
+                      control={form.control}
+                      name="year"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Ano</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o ano" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {years.map((year) => (
+                                <SelectItem key={year} value={year}>
+                                  {year}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                <Button type="submit">
-                  <Download className="mr-2 h-4 w-4" />
-                  Gerar Relatório PDF
-                </Button>
+                  <Button type="submit" className="mt-8">
+                    <Download className="mr-2 h-4 w-4" />
+                    Gerar Relatório PDF
+                  </Button>
+                </fieldset>
               </form>
             </Form>
           )}

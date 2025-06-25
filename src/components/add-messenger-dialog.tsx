@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import type { Messenger } from '@/lib/mock-data';
 
 const addMessengerSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
@@ -50,10 +51,12 @@ export function AddMessengerDialog({
   open, 
   onOpenChange, 
   messenger,
+  onSave,
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void; 
-  messenger?: any | null;
+  messenger?: Messenger | null;
+  onSave: (data: Omit<Messenger, 'id'> & { id?: string }) => void;
 }) {
   const isEditMode = !!messenger;
 
@@ -83,12 +86,7 @@ export function AddMessengerDialog({
   }, [open, messenger, isEditMode, form]);
 
   const onSubmit = (data: AddMessengerFormValues) => {
-    const finalData = { ...data };
-    if (!finalData.receivesCommission) {
-      finalData.commissionPercentage = undefined;
-    }
-    console.log(isEditMode ? 'Mensageiro atualizado:' : 'Novo mensageiro:', finalData);
-    onOpenChange(false);
+    onSave(isEditMode ? { ...data, id: messenger?.id } : data);
   };
   
   const handleCancel = () => {

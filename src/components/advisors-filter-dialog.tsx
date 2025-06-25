@@ -27,31 +27,34 @@ const filterSchema = z.object({
   status: z.enum(['todos', 'ativo', 'férias', 'licença médica', 'suspensão', 'demitido']).default('todos'),
 });
 
-type FilterFormValues = z.infer<typeof filterSchema>;
+export type FilterFormValues = z.infer<typeof filterSchema>;
+
+const defaultValues: FilterFormValues = {
+    status: 'todos',
+};
 
 export function AdvisorsFilterDialog({
   open,
   onOpenChange,
+  onApply,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onApply: (filters: FilterFormValues) => void;
 }) {
   const form = useForm<FilterFormValues>({
     resolver: zodResolver(filterSchema),
-    defaultValues: {
-      status: 'todos',
-    },
+    defaultValues,
   });
 
   const onSubmit = (data: FilterFormValues) => {
-    console.log('Filtros de assessores aplicados:', data);
+    onApply(data);
     onOpenChange(false);
   };
 
   const handleClear = () => {
-    form.reset({
-        status: 'todos',
-    });
+    form.reset(defaultValues);
+    onApply(defaultValues);
   };
 
   return (

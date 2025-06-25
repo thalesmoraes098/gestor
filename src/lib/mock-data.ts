@@ -1,3 +1,5 @@
+'use client';
+
 // Types
 export type Advisor = {
   id: string;
@@ -114,45 +116,47 @@ const today = new Date();
 const lastMonth = new Date();
 lastMonth.setMonth(today.getMonth() - 1);
 
+const getDateString = (date: Date) => date.toISOString().split('T')[0];
+
 export const donorsData: Donor[] = [
   { id: 'DON001', code: 'DON001', name: 'João da Silva', email: 'joao.silva@example.com', status: 'Ativo', assessor: 'Carlos Almeida', amount: 150.00, joinDate: '2023-01-15', isLoyal: true, paymentDay: '15', phones: [{ value: '(11) 98765-4321' }], addresses: [{ cep: '01001-000', street: 'Praça da Sé', number: '10', complement: 'Lado A', neighborhood: 'Sé', city: 'São Paulo', state: 'SP', reference: 'Próximo à Catedral' }], history: [
-    { date: '2024-07-15', amount: 150.00, status: 'Pago' },
-    { date: '2024-06-15', amount: 150.00, status: 'Pago' },
-    { date: '2024-05-15', amount: 150.00, status: 'Pago' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth(), 15)), amount: 150.00, status: 'Pago' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth() - 1, 15)), amount: 150.00, status: 'Pago' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth() - 2, 15)), amount: 150.00, status: 'Pago' },
   ]},
   { id: 'DON002', code: 'DON002', name: 'Maria Oliveira', email: 'maria.oliveira@example.com', status: 'Ativo', assessor: 'Ana Beatriz', amount: 200.00, joinDate: '2023-02-20', isLoyal: false, phones: [{ value: '(21) 91234-5678' }], addresses: [{ cep: '20031-912', street: 'Av. Graça Aranha', number: '1', complement: '', neighborhood: 'Centro', city: 'Rio de Janeiro', state: 'RJ', reference: '' }], history: [
-    { date: '2024-07-20', amount: 200.00, status: 'Pago' },
-    { date: '2024-06-20', amount: 200.00, status: 'Pendente' },
-    { date: '2024-05-20', amount: 200.00, status: 'Pago' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth(), 20)), amount: 200.00, status: 'Pago' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth() - 1, 20)), amount: 200.00, status: 'Pendente' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth() - 2, 20)), amount: 200.00, status: 'Pago' },
   ]},
   { id: 'DON003', code: 'DON003', name: 'Carlos Pereira', email: 'carlos.pereira@example.com', status: 'Inativo', assessor: 'Carlos Almeida', amount: 50.00, joinDate: '2023-03-10', isLoyal: false, phones: [{value: '(31) 98888-7777'}], addresses: [], history: [
     { date: '2024-03-10', amount: 50.00, status: 'Pago' },
     { date: '2024-02-10', amount: 50.00, status: 'Falhou' },
   ]},
-  { id: 'DON004', code: 'DON004', name: 'Ana Costa', email: 'ana.costa@example.com', status: 'Ativo', assessor: 'Direto', amount: 100.00, joinDate: '2023-04-05', isLoyal: true, paymentDay: '5', phones: [{value: '(41) 96666-5555'}], addresses: [], history: [
-    { date: '2024-07-05', amount: 100.00, status: 'Pago' },
+  { id: 'DON004', code: 'DON004', name: 'Ana Costa', email: 'ana.costa@example.com', status: 'Ativo', assessor: 'Direto', amount: 100.00, joinDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 5)), isLoyal: true, paymentDay: '5', phones: [{value: '(41) 96666-5555'}], addresses: [], history: [
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth(), 5)), amount: 100.00, status: 'Pago' },
   ]},
   { id: 'DON005', code: 'DON005', name: 'Pedro Santos', email: 'pedro.santos@example.com', status: 'Pendente', assessor: 'Juliana Lima', amount: 75.00, joinDate: '2023-05-12', isLoyal: false, phones: [{value: '(51) 94444-3333'}], addresses: [], history: []},
-  { id: 'DON006', code: 'DON006', name: 'Sofia Lima', email: 'sofia.lima@example.com', status: 'Ativo', assessor: 'Ana Beatriz', amount: 300.00, joinDate: '2023-06-18', isLoyal: true, paymentDay: '20', phones: [{value: '(61) 92222-1111'}], addresses: [], history: [
-    { date: '2024-07-18', amount: 300.00, status: 'Pago' },
-    { date: '2024-06-18', amount: 300.00, status: 'Pago' },
+  { id: 'DON006', code: 'DON006', name: 'Sofia Lima', email: 'sofia.lima@example.com', status: 'Ativo', assessor: 'Ana Beatriz', amount: 300.00, joinDate: getDateString(new Date(today.getFullYear(), today.getMonth() - 1, 18)), isLoyal: true, paymentDay: '20', phones: [{value: '(61) 92222-1111'}], addresses: [], history: [
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth() - 1, 18)), amount: 300.00, status: 'Pago' },
+    { date: getDateString(new Date(today.getFullYear(), today.getMonth() - 2, 18)), amount: 300.00, status: 'Pago' },
   ]},
   { id: 'DON007', code: 'DON007', name: 'Lucas Souza', email: 'lucas.souza@example.com', status: 'Inativo', assessor: 'Direto', amount: 25.00, joinDate: '2023-07-22', isLoyal: false, phones: [{value: '(71) 91111-0000'}], addresses: [], history: [
     { date: '2024-01-22', amount: 25.00, status: 'Pago' },
   ]},
-  { id: 'DON008', code: 'DON008', name: 'Novo Doador', email: 'novo.doador@example.com', status: 'Ativo', assessor: 'Carlos Almeida', amount: 100.00, joinDate: today.toISOString().split('T')[0], isLoyal: false, phones: [{value: '(11) 98765-1234'}], addresses: [], history: [
-    { date: today.toISOString().split('T')[0], amount: 100.00, status: 'Pago' },
+  { id: 'DON008', code: 'DON008', name: 'Novo Doador do Mês', email: 'novo.doador@example.com', status: 'Ativo', assessor: 'Carlos Almeida', amount: 100.00, joinDate: getDateString(today), isLoyal: false, phones: [{value: '(11) 98765-1234'}], addresses: [], history: [
+    { date: getDateString(today), amount: 100.00, status: 'Pago' },
   ]},
 ];
 
 export const donationsData: Donation[] = [
-    { id: 'DOA001', donorName: 'João da Silva', donorCode: 'DON001', amount: 150.00, paymentDate: '2024-07-15', dueDate: '2024-07-15', status: 'Pago', assessor: 'Carlos Almeida', messenger: 'Fábio Souza', paymentMethod: 'Dinheiro' },
-    { id: 'DOA002', donorName: 'Maria Oliveira', donorCode: 'DON002', amount: 200.00, paymentDate: '', dueDate: '2024-07-20', status: 'Pendente', assessor: 'Ana Beatriz', messenger: 'Gabi Lima', paymentMethod: 'Cartão de Crédito' },
-    { id: 'DOA003', donorName: 'Ana Costa', donorCode: 'DON004', amount: 100.00, paymentDate: '2024-07-06', dueDate: '2024-07-05', status: 'Pago', assessor: 'Direto', messenger: 'Hugo Costa', paymentMethod: 'PIX' },
-    { id: 'DOA004', donorName: 'Sofia Lima', donorCode: 'DON006', amount: 300.00, paymentDate: '', dueDate: '2024-06-18', status: 'Atrasado', assessor: 'Ana Beatriz', messenger: 'Leo Martins', paymentMethod: 'Dinheiro' },
+    { id: 'DOA001', donorName: 'João da Silva', donorCode: 'DON001', amount: 150.00, paymentDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 15)), dueDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 15)), status: 'Pago', assessor: 'Carlos Almeida', messenger: 'Fábio Souza', paymentMethod: 'Dinheiro' },
+    { id: 'DOA002', donorName: 'Maria Oliveira', donorCode: 'DON002', amount: 200.00, paymentDate: '', dueDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 20)), status: 'Pendente', assessor: 'Ana Beatriz', messenger: 'Gabi Lima', paymentMethod: 'Cartão de Crédito' },
+    { id: 'DOA003', donorName: 'Ana Costa', donorCode: 'DON004', amount: 100.00, paymentDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 6)), dueDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 5)), status: 'Pago', assessor: 'Direto', messenger: 'Hugo Costa', paymentMethod: 'PIX' },
+    { id: 'DOA004', donorName: 'Sofia Lima', donorCode: 'DON006', amount: 300.00, paymentDate: '', dueDate: getDateString(new Date(today.getFullYear(), today.getMonth() -1, 18)), status: 'Atrasado', assessor: 'Ana Beatriz', messenger: 'Leo Martins', paymentMethod: 'Dinheiro' },
     { id: 'DOA005', donorName: 'Carlos Pereira', donorCode: 'DON003', amount: 50.00, paymentDate: '', dueDate: '2024-03-10', status: 'Cancelado', assessor: 'Carlos Almeida', messenger: '-', paymentMethod: 'Dinheiro' },
-    { id: 'DOA006', donorName: 'João da Silva', donorCode: 'DON001', amount: 400.00, paymentDate: today.toISOString().split('T')[0], dueDate: today.toISOString().split('T')[0], status: 'Pago', assessor: 'Carlos Almeida', messenger: 'Fábio Souza', paymentMethod: 'Coleta' },
-    { id: 'DOA007', donorName: 'Ana Beatriz', donorCode: 'DON002', amount: 600.00, paymentDate: today.toISOString().split('T')[0], dueDate: today.toISOString().split('T')[0], status: 'Pago', assessor: 'Ana Beatriz', messenger: 'Gabi Lima', paymentMethod: 'Dinheiro' },
+    { id: 'DOA006', donorName: 'João da Silva', donorCode: 'DON001', amount: 400.00, paymentDate: getDateString(today), dueDate: getDateString(today), status: 'Pago', assessor: 'Carlos Almeida', messenger: 'Fábio Souza', paymentMethod: 'Coleta' },
+    { id: 'DOA007', donorName: 'Ana Beatriz', donorCode: 'DON002', amount: 600.00, paymentDate: getDateString(today), dueDate: getDateString(today), status: 'Pago', assessor: 'Ana Beatriz', messenger: 'Gabi Lima', paymentMethod: 'Dinheiro' },
 ];
 
 const monthlyResults: MonthlyResult[] = [

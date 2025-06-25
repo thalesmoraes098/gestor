@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
-import { advisorNames, messengerNames, donorOptions } from '@/lib/mock-data';
+import { advisorNames, messengerNames, donorOptions, type Donation } from '@/lib/mock-data';
 
 
 const addDonationSchema = z.object({
@@ -33,23 +33,33 @@ const addDonationSchema = z.object({
 
 type AddDonationFormValues = z.infer<typeof addDonationSchema>;
 
-const defaultFormValues: AddDonationFormValues = {
+const defaultFormValues: Omit<AddDonationFormValues, 'dueDate'> & { dueDate?: Date } = {
   donorId: '',
   amount: 0,
-  dueDate: new Date(),
+  dueDate: undefined,
   status: 'Pendente',
   paymentMethod: 'PIX',
   assessor: '',
   messenger: '',
 };
 
-export function AddDonationDialog({ open, onOpenChange, donation }: { open: boolean; onOpenChange: (open: boolean) => void; donation?: any | null; }) {
+export function AddDonationDialog({ 
+    open, 
+    onOpenChange, 
+    donation,
+    onSave,
+}: { 
+    open: boolean; 
+    onOpenChange: (open: boolean) => void; 
+    donation?: Donation | null; 
+    onSave: (data: Omit<Donation, 'id'> & { id?: string }) => void;
+}) {
   const isEditMode = !!donation;
   const [isDonorPopoverOpen, setIsDonorPopoverOpen] = useState(false);
 
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(addDonationSchema),
-    defaultValues: defaultFormValues,
+    defaultValues: { ...defaultFormValues, dueDate: new Date() },
   });
 
   useEffect(() => {
@@ -67,14 +77,23 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
           messenger: donation.messenger || '',
         });
       } else {
-        form.reset(defaultFormValues);
+        form.reset({ ...defaultFormValues, dueDate: new Date() });
       }
     }
   }, [open, donation, isEditMode, form]);
 
   const onSubmit = (data: AddDonationFormValues) => {
-    console.log(isEditMode ? 'Doação atualizada:' : 'Nova doação:', data);
-    onOpenChange(false);
+    const donor = donorOptions.find(d => d.id === data.donorId);
+    if (!donor) return;
+
+    const submissionData = {
+        ...data,
+        donorName: donor.name,
+        donorCode: donor.id,
+        dueDate: format(data.dueDate, 'yyyy-MM-dd'),
+        paymentDate: data.paymentDate ? format(data.paymentDate, 'yyyy-MM-dd') : '',
+    };
+    onSave(isEditMode ? { ...submissionData, id: donation?.id } : submissionData);
   };
   
   const handleCancel = () => {

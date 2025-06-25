@@ -19,20 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import type { Donation } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
-
-type Donation = {
-  id: string;
-  donorName: string;
-  donorCode: string;
-  amount: number;
-  paymentDate: string;
-  dueDate: string;
-  status: 'Pago' | 'Pendente' | 'Atrasado' | 'Cancelado';
-  assessor: string;
-  messenger: string;
-  paymentMethod: 'Dinheiro' | 'Cartão de Crédito' | 'PIX';
-};
 
 const statusVariantMap: Record<Donation['status'], VariantProps<typeof badgeVariants>['variant']> = {
   Pago: 'default',
@@ -58,7 +46,15 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export function DonationsTable({ data, onEdit }: { data: any[]; onEdit: (donation: any) => void; }) {
+export function DonationsTable({ 
+    data, 
+    onEdit,
+    onDelete,
+}: { 
+    data: Donation[]; 
+    onEdit: (donation: Donation) => void;
+    onDelete: (donationId: string) => void;
+}) {
   return (
     <Table>
       <TableHeader>
@@ -111,7 +107,7 @@ export function DonationsTable({ data, onEdit }: { data: any[]; onEdit: (donatio
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem className="text-destructive" onSelect={() => onDelete(donation.id)}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir
                   </DropdownMenuItem>

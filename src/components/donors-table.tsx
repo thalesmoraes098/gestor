@@ -29,24 +29,13 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MoreHorizontal, Pencil, Trash2, History, Download } from 'lucide-react';
+import type { Donor } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
 
-type Donation = {
+type DonationHistory = {
   date: string;
   amount: number;
   status: 'Pago' | 'Pendente' | 'Falhou';
-};
-
-type Donor = {
-  id: string;
-  code: string;
-  name: string;
-  email: string;
-  status: 'Ativo' | 'Inativo' | 'Pendente';
-  assessor: string;
-  amount: number;
-  joinDate: string;
-  history: Donation[];
 };
 
 const statusVariantMap: Record<Donor['status'], VariantProps<typeof badgeVariants>['variant']> = {
@@ -55,7 +44,7 @@ const statusVariantMap: Record<Donor['status'], VariantProps<typeof badgeVariant
   Pendente: 'outline',
 };
 
-const donationStatusVariantMap: Record<Donation['status'], VariantProps<typeof badgeVariants>['variant']> = {
+const donationStatusVariantMap: Record<DonationHistory['status'], VariantProps<typeof badgeVariants>['variant']> = {
     Pago: 'default',
     Pendente: 'outline',
     Falhou: 'destructive',
@@ -77,8 +66,21 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export function DonorsTable({ data, onEdit }: { data: any[]; onEdit: (donor: any) => void; }) {
+export function DonorsTable({ 
+    data, 
+    onEdit, 
+    onDelete 
+}: { 
+    data: Donor[]; 
+    onEdit: (donor: Donor) => void;
+    onDelete: (donorId: string) => void;
+}) {
   const [historyDonor, setHistoryDonor] = useState<Donor | null>(null);
+
+  const handleDownload = (format: 'Excel' | 'PDF') => {
+    console.log(`Downloading ${historyDonor?.name}'s history as ${format}`);
+    // Placeholder for actual download logic
+  };
 
   return (
     <>
@@ -135,7 +137,7 @@ export function DonorsTable({ data, onEdit }: { data: any[]; onEdit: (donor: any
                       <History className="mr-2 h-4 w-4" />
                       Histórico de doações
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem className="text-destructive" onSelect={() => onDelete(donor.id)}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Excluir
                     </DropdownMenuItem>
@@ -186,11 +188,11 @@ export function DonorsTable({ data, onEdit }: { data: any[]; onEdit: (donor: any
             </Table>
           </ScrollArea>
           <DialogFooter className="sm:justify-start">
-             <Button type="button" variant="outline">
+             <Button type="button" variant="outline" onClick={() => handleDownload('Excel')}>
               <Download className="mr-2 h-4 w-4" />
               Baixar em Excel
             </Button>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" onClick={() => handleDownload('PDF')}>
               <Download className="mr-2 h-4 w-4" />
               Baixar em PDF
             </Button>

@@ -61,11 +61,13 @@ export function ReallocateClientsDialog({
   onOpenChange,
   dismissedAdvisor,
   activeAdvisors,
+  onConfirm,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   dismissedAdvisor: Advisor | null;
   activeAdvisors: Advisor[];
+  onConfirm: (data: ReallocationFormValues) => void;
 }) {
   const form = useForm<ReallocationFormValues>({
     resolver: zodResolver(reallocationSchema),
@@ -87,8 +89,7 @@ export function ReallocateClientsDialog({
   }, [open, form]);
 
   const onSubmit = (data: ReallocationFormValues) => {
-    console.log(`Reallocation decision for ${dismissedAdvisor?.name}:`, data);
-    onOpenChange(false);
+    onConfirm(data);
   };
   
   const handleCancel = () => {

@@ -19,16 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import type { Messenger } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
-
-type Messenger = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
-  commissionPercentage?: number;
-};
 
 const statusVariantMap: Record<Messenger['status'], VariantProps<typeof badgeVariants>['variant']> = {
   Ativo: 'default',
@@ -38,7 +30,15 @@ const statusVariantMap: Record<Messenger['status'], VariantProps<typeof badgeVar
   Demitido: 'secondary',
 };
 
-export function MessengersTable({ data, onEdit }: { data: Messenger[]; onEdit: (messenger: Messenger) => void; }) {
+export function MessengersTable({ 
+    data, 
+    onEdit,
+    onDelete,
+}: { 
+    data: Messenger[]; 
+    onEdit: (messenger: Messenger) => void; 
+    onDelete: (messengerId: string) => void;
+}) {
   return (
     <Table>
       <TableHeader>
@@ -87,7 +87,7 @@ export function MessengersTable({ data, onEdit }: { data: Messenger[]; onEdit: (
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem className="text-destructive" onSelect={() => onDelete(messenger.id)}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir
                   </DropdownMenuItem>

@@ -35,6 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { advisorNames } from '@/lib/mock-data';
+import type { Donor } from '@/lib/mock-data';
 
 const addressSchema = z.object({
   cep: z.string().optional(),
@@ -62,7 +63,7 @@ const addDonorSchema = z.object({
 
 type AddDonorFormValues = z.infer<typeof addDonorSchema>;
 
-const defaultFormValues = {
+const defaultFormValues: Omit<AddDonorFormValues, 'phones' | 'addresses'> & { phones: {value: string}[], addresses: any[] } = {
   name: '',
   code: '',
   email: '',
@@ -86,10 +87,12 @@ export function AddDonorDialog({
   open,
   onOpenChange,
   donor,
+  onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  donor?: any | null;
+  donor?: Donor | null;
+  onSave: (data: Omit<Donor, 'id' | 'history' | 'amount'> & { id?: string }) => void;
 }) {
   const isEditMode = !!donor;
 
@@ -134,8 +137,7 @@ export function AddDonorDialog({
     if (!isEditMode && !finalData.code) {
       finalData.code = Math.floor(100000 + Math.random() * 900000).toString();
     }
-    console.log(isEditMode ? 'Dados do doador atualizados:' : 'Dados do novo doador:', finalData);
-    onOpenChange(false);
+    onSave(isEditMode ? { ...finalData, id: donor?.id } : finalData);
   };
   
   const handleCancel = () => {
@@ -176,7 +178,7 @@ export function AddDonorDialog({
                       <FormItem>
                         <FormLabel>Código do Doador</FormLabel>
                         <FormControl>
-                          <Input placeholder="001" {...field} />
+                          <Input placeholder="Será gerado automaticamente se vazio" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

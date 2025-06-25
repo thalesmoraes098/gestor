@@ -19,19 +19,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import type { Advisor } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
-
-type Advisor = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  minCommissionPercentage: number;
-  maxCommissionPercentage: number;
-  goal: number;
-  newClientsGoal: number;
-  status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
-};
 
 const statusVariantMap: Record<Advisor['status'], VariantProps<typeof badgeVariants>['variant']> = {
   Ativo: 'default',
@@ -48,7 +37,15 @@ const formatCurrency = (value: number) => {
     }).format(value);
   };
 
-export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advisor: Advisor) => void; }) {
+export function AdvisorsTable({ 
+    data, 
+    onEdit,
+    onDelete,
+}: { 
+    data: Advisor[]; 
+    onEdit: (advisor: Advisor) => void;
+    onDelete: (advisorId: string) => void;
+}) {
   return (
     <Table>
       <TableHeader>
@@ -97,7 +94,7 @@ export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advi
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem className="text-destructive" onSelect={() => onDelete(advisor.id)}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir
                   </DropdownMenuItem>

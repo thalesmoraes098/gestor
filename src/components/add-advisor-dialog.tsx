@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { Advisor } from '@/lib/mock-data';
 
 const addAdvisorSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
@@ -46,12 +47,12 @@ export function AddAdvisorDialog({
   open, 
   onOpenChange, 
   advisor,
-  onInitiateDismissal 
+  onSave
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void; 
-  advisor?: any | null;
-  onInitiateDismissal?: (advisor: any) => void; 
+  advisor?: Advisor | null;
+  onSave: (data: Omit<Advisor, 'id'> & { id?: string }) => void;
 }) {
   const isEditMode = !!advisor;
 
@@ -81,12 +82,7 @@ export function AddAdvisorDialog({
   }, [open, advisor, isEditMode, form]);
 
   const onSubmit = (data: AddAdvisorFormValues) => {
-    if (isEditMode && data.status === 'Demitido' && advisor?.status !== 'Demitido' && onInitiateDismissal) {
-      onInitiateDismissal({ ...advisor, ...data });
-    } else {
-      console.log(isEditMode ? 'Assessor atualizado:' : 'Novo assessor:', data);
-    }
-    onOpenChange(false);
+    onSave(isEditMode ? { ...data, id: advisor?.id } : data);
   };
   
   const handleCancel = () => {

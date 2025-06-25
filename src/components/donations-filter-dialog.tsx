@@ -47,37 +47,36 @@ const filterSchema = z.object({
   maxAmount: z.coerce.number().optional(),
 });
 
-type FilterFormValues = z.infer<typeof filterSchema>;
+export type FilterFormValues = z.infer<typeof filterSchema>;
+
+const defaultValues: FilterFormValues = {
+  status: 'todos',
+  assessor: '',
+  messenger: '',
+};
 
 export function DonationsFilterDialog({
   open,
   onOpenChange,
+  onApply,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onApply: (filters: FilterFormValues) => void;
 }) {
   const form = useForm<FilterFormValues>({
     resolver: zodResolver(filterSchema),
-    defaultValues: {
-      status: 'todos',
-    },
+    defaultValues,
   });
 
   const onSubmit = (data: FilterFormValues) => {
-    console.log('Filtros de doações aplicados:', data);
+    onApply(data);
     onOpenChange(false);
   };
 
   const handleClear = () => {
-    form.reset({
-        status: 'todos',
-        assessor: '',
-        messenger: '',
-        startDate: undefined,
-        endDate: undefined,
-        minAmount: undefined,
-        maxAmount: undefined,
-    });
+    form.reset(defaultValues);
+    onApply(defaultValues);
   };
 
   return (

@@ -5,20 +5,4 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
-  # Environment variables accessible from your run command, i.e. process.env.MY_VAR
-  # We use Google Secret Manager for security. You must create these secrets
-  # in the Google Cloud console for your project.
-  # https://firebase.google.com/docs/app-hosting/configure#environment-variables
-  env:
-    - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-      secret: NEXT_PUBLIC_FIREBASE_API_KEY
-    - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-      secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-      secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-      secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-      secret: NEXT_PUBLIC_FIREBASE_APP_ID
+  # Environment variables will be re-added after the service account is created.

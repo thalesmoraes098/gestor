@@ -30,7 +30,17 @@ const defaultFormValues: AddAdvisorFormValues = {
   status: 'Ativo',
 };
 
-export function AddAdvisorDialog({ open, onOpenChange, advisor }: { open: boolean; onOpenChange: (open: boolean) => void; advisor?: any | null; }) {
+export function AddAdvisorDialog({ 
+  open, 
+  onOpenChange, 
+  advisor,
+  onInitiateDismissal 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  advisor?: any | null;
+  onInitiateDismissal?: (advisor: any) => void; 
+}) {
   const isEditMode = !!advisor;
 
   const form = useForm<AddAdvisorFormValues>({
@@ -55,7 +65,11 @@ export function AddAdvisorDialog({ open, onOpenChange, advisor }: { open: boolea
   }, [open, advisor, isEditMode, form]);
 
   const onSubmit = (data: AddAdvisorFormValues) => {
-    console.log(isEditMode ? 'Assessor atualizado:' : 'Novo assessor:', data);
+    if (isEditMode && data.status === 'Demitido' && advisor?.status !== 'Demitido' && onInitiateDismissal) {
+      onInitiateDismissal({ ...advisor, ...data });
+    } else {
+      console.log(isEditMode ? 'Assessor atualizado:' : 'Novo assessor:', data);
+    }
     onOpenChange(false);
   };
   

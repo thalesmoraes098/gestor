@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AdvisorsTable } from "@/components/advisors-table";
 import { AdvisorsFilterDialog } from "@/components/advisors-filter-dialog";
 import { AddAdvisorDialog } from "@/components/add-advisor-dialog";
+import { ReallocateClientsDialog } from "@/components/reallocate-clients-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 
 type Advisor = {
@@ -29,6 +30,12 @@ export default function AssessoresPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAdvisorDialogOpen, setIsAdvisorDialogOpen] = useState(false);
   const [advisorToEdit, setAdvisorToEdit] = useState<Advisor | null>(null);
+  const [isReallocationDialogOpen, setIsReallocationDialogOpen] = useState(false);
+  const [dismissedAdvisor, setDismissedAdvisor] = useState<Advisor | null>(null);
+
+  const activeAdvisors = advisorsData.filter(
+    (a) => a.status === 'Ativo' && a.id !== dismissedAdvisor?.id
+  );
 
   const handleEdit = (advisor: Advisor) => {
     setAdvisorToEdit(advisor);
@@ -46,11 +53,27 @@ export default function AssessoresPage() {
           setAdvisorToEdit(null);
       }
   }
+  
+  const handleInitiateDismissal = (advisor: Advisor) => {
+    setDismissedAdvisor(advisor);
+    setIsReallocationDialogOpen(true);
+  };
 
   return (
     <>
       <AdvisorsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} />
-      <AddAdvisorDialog open={isAdvisorDialogOpen} onOpenChange={handleDialogChange} advisor={advisorToEdit} />
+      <AddAdvisorDialog 
+        open={isAdvisorDialogOpen} 
+        onOpenChange={handleDialogChange} 
+        advisor={advisorToEdit} 
+        onInitiateDismissal={handleInitiateDismissal}
+      />
+      <ReallocateClientsDialog
+        open={isReallocationDialogOpen}
+        onOpenChange={setIsReallocationDialogOpen}
+        dismissedAdvisor={dismissedAdvisor}
+        activeAdvisors={activeAdvisors}
+      />
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>

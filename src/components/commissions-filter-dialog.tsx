@@ -42,9 +42,11 @@ type FilterFormValues = z.infer<typeof filterSchema>;
 export function CommissionsFilterDialog({
   open,
   onOpenChange,
+  onApply,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onApply: (data: FilterFormValues) => void;
 }) {
   const form = useForm<FilterFormValues>({
     resolver: zodResolver(filterSchema),
@@ -56,7 +58,7 @@ export function CommissionsFilterDialog({
   });
 
   const onSubmit = (data: FilterFormValues) => {
-    console.log('Filtros de comissões aplicados:', data);
+    onApply(data);
     onOpenChange(false);
   };
 

@@ -27,6 +27,7 @@ type Messenger = {
   email: string;
   phone: string;
   status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
+  commissionPercentage?: number;
 };
 
 const statusVariantMap: Record<Messenger['status'], VariantProps<typeof badgeVariants>['variant']> = {
@@ -46,6 +47,7 @@ export function MessengersTable({ data, onEdit }: { data: Messenger[]; onEdit: (
           <TableHead>Status</TableHead>
           <TableHead className="hidden md:table-cell">E-mail</TableHead>
           <TableHead className="hidden sm:table-cell">Telefone</TableHead>
+          <TableHead className="text-right">Comissão (%)</TableHead>
           <TableHead>
             <span className="sr-only">Ações</span>
           </TableHead>
@@ -67,6 +69,9 @@ export function MessengersTable({ data, onEdit }: { data: Messenger[]; onEdit: (
             </TableCell>
             <TableCell className="hidden md:table-cell">{messenger.email}</TableCell>
             <TableCell className="hidden sm:table-cell">{messenger.phone}</TableCell>
+            <TableCell className="text-right font-medium">
+                {messenger.commissionPercentage ? `${messenger.commissionPercentage.toFixed(1)}%` : '-'}
+            </TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

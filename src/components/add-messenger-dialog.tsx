@@ -11,13 +11,27 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 
 const addMessengerSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
   status: z.enum(['Ativo', 'Férias', 'Licença Médica', 'Suspensão', 'Demitido']),
-});
+  receivesCommission: z.boolean().default(false),
+  commissionPercentage: z.coerce.number().optional(),
+}).refine(
+  (data) => {
+    if (data.receivesCommission) {
+      return data.commissionPercentage != null && data.commissionPercentage >= 0 && data.commissionPercentage <= 100;
+    }
+    return true;
+  },
+  {
+    message: 'O percentual é obrigatório e deve ser entre 0 e 100.',
+    path: ['commissionPercentage'],
+  }
+);
 
 type AddMessengerFormValues = z.infer<typeof addMessengerSchema>;
 
@@ -26,6 +40,8 @@ const defaultFormValues: AddMessengerFormValues = {
   email: '',
   phone: '',
   status: 'Ativo',
+  receivesCommission: false,
+  commissionPercentage: 0,
 };
 
 export function AddMessengerDialog({ 
@@ -44,6 +60,8 @@ export function AddMessengerDialog({
     defaultValues: defaultFormValues,
   });
 
+  const receivesCommission = form.watch('receivesCommission');
+
   useEffect(() => {
     if (open) {
       if (isEditMode && messenger) {
@@ -52,6 +70,8 @@ export function AddMessengerDialog({
           email: messenger.email || '',
           phone: messenger.phone || '',
           status: messenger.status || 'Ativo',
+          receivesCommission: messenger.commissionPercentage != null,
+          commissionPercentage: messenger.commissionPercentage || 0,
         });
       } else {
         form.reset(defaultFormValues);
@@ -60,7 +80,11 @@ export function AddMessengerDialog({
   }, [open, messenger, isEditMode, form]);
 
   const onSubmit = (data: AddMessengerFormValues) => {
-    console.log(isEditMode ? 'Mensageiro atualizado:' : 'Novo mensageiro:', data);
+    const finalData = { ...data };
+    if (!finalData.receivesCommission) {
+      finalData.commissionPercentage = undefined;
+    }
+    console.log(isEditMode ? 'Mensageiro atualizado:' : 'Novo mensageiro:', finalData);
     onOpenChange(false);
   };
   
@@ -104,6 +128,36 @@ export function AddMessengerDialog({
                     <FormMessage />
                   </FormItem>
                 )}/>
+
+                <FormField
+                  control={form.control}
+                  name="receivesCommission"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Recebe Comissão?
+                        </FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {receivesCommission && (
+                  <FormField control={form.control} name="commissionPercentage" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Percentual de Comissão (%)</FormLabel>
+                      <FormControl><Input type="number" placeholder="5,0" {...field} value={field.value ?? ''} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}/>
+                )}
 
                 <FormField control={form.control} name="status" render={({ field }) => (
                   <FormItem>

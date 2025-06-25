@@ -14,7 +14,7 @@ import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type DonorOption = { id: string; name: string; code: string };
+type DonorOption = { id: string; name: string; code: string; assessor?: string; };
 type CollaboratorOption = { name: string };
 
 export default function DoacoesPage() {
@@ -64,7 +64,7 @@ export default function DoacoesPage() {
         const data: DonorOption[] = [];
         snapshot.forEach((doc) => {
             const donorData = doc.data();
-            data.push({ id: doc.id, name: donorData.name, code: donorData.code });
+            data.push({ id: doc.id, name: donorData.name, code: donorData.code, assessor: donorData.assessor });
         });
         setDonors(data);
     });
@@ -157,12 +157,19 @@ export default function DoacoesPage() {
             toast({ title: 'Doação Adicionada', description: 'A nova doação foi registrada com sucesso.' });
         }
 
-        if (data.status === 'Pago' && data.donorId) {
+        if (data.donorId) {
             const donorRef = doc(db, "donors", data.donorId);
-            await updateDoc(donorRef, {
-                amount: data.amount, // Update the last donation amount
-                status: 'Ativo' // A donor who pays is active
-            });
+            const updates: { [key: string]: any } = {
+                // Sempre atualiza o assessor do doador para o da última doação registrada
+                assessor: data.assessor || ''
+            };
+
+            if (data.status === 'Pago') {
+                updates.amount = data.amount; // Atualiza o valor da última doação
+                updates.status = 'Ativo'; // Um doador que paga é considerado ativo
+            }
+            
+            await updateDoc(donorRef, updates);
         }
 
     } catch (error) {

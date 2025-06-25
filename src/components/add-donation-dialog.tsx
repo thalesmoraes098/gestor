@@ -42,7 +42,7 @@ const defaultFormValues: Omit<AddDonationFormValues, 'dueDate'> & { dueDate?: Da
   messenger: '',
 };
 
-type DonorOption = { id: string; name: string; code: string };
+type DonorOption = { id: string; name: string; code: string; assessor?: string; };
 type CollaboratorOption = { name: string };
 
 export function AddDonationDialog({ 
@@ -70,6 +70,8 @@ export function AddDonationDialog({
     defaultValues: { ...defaultFormValues, dueDate: new Date() },
   });
 
+  const donorId = form.watch('donorId');
+
   useEffect(() => {
     if (open) {
       if (isEditMode && donation) {
@@ -89,6 +91,15 @@ export function AddDonationDialog({
       }
     }
   }, [open, donation, isEditMode, form, donors]);
+  
+  useEffect(() => {
+    if (donorId && !isEditMode) {
+      const selectedDonor = donors.find(d => d.id === donorId);
+      if (selectedDonor) {
+        form.setValue('assessor', selectedDonor.assessor || '', { shouldValidate: true });
+      }
+    }
+  }, [donorId, donors, isEditMode, form]);
 
   const onSubmit = (data: AddDonationFormValues) => {
     const donor = donors.find(d => d.id === data.donorId);

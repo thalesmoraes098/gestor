@@ -10,7 +10,7 @@ import { ReallocateClientsDialog } from "@/components/reallocate-clients-dialog"
 import { Filter, PlusCircle } from "lucide-react";
 import type { Advisor } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { collection, doc, addDoc, updateDoc, onSnapshot, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,25 +66,6 @@ export default function AssessoresPage() {
   const handleAdd = () => {
     setAdvisorToEdit(null);
     setIsAdvisorDialogOpen(true);
-  };
-
-  const handleDelete = async (advisorId: string) => {
-    if (window.confirm('Tem certeza de que deseja excluir este assessor? Esta ação não pode ser desfeita.')) {
-      try {
-        await deleteDoc(doc(db, "advisors", advisorId));
-        toast({
-          title: 'Assessor Excluído',
-          description: 'O assessor foi removido com sucesso.',
-        });
-      } catch (error) {
-        console.error("Error deleting advisor: ", error);
-        toast({
-          variant: "destructive",
-          title: 'Erro ao Excluir',
-          description: 'Não foi possível excluir o assessor.',
-        });
-      }
-    }
   };
 
   const handleSave = async (data: Omit<Advisor, 'id'> & { id?: string }) => {
@@ -260,7 +241,7 @@ export default function AssessoresPage() {
                 </Table>
               </div>
             ) : (
-              <AdvisorsTable data={filteredAdvisors} onEdit={handleEdit} onDelete={handleDelete} />
+              <AdvisorsTable data={filteredAdvisors} onEdit={handleEdit} />
             )}
           </CardContent>
         </Card>

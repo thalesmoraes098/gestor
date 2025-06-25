@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil } from 'lucide-react';
 import type { Advisor } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
 
@@ -40,11 +40,9 @@ const formatCurrency = (value: number) => {
 export function AdvisorsTable({ 
     data, 
     onEdit,
-    onDelete,
 }: { 
     data: Advisor[]; 
     onEdit: (advisor: Advisor) => void;
-    onDelete: (advisorId: string) => void;
 }) {
   return (
     <Table>
@@ -93,10 +91,6 @@ export function AdvisorsTable({
                   <DropdownMenuItem onSelect={() => onEdit(advisor)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive" onSelect={() => onDelete(advisor.id)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

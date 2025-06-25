@@ -26,6 +26,7 @@ type Commission = {
   referenceMonth: string;
   recipientName: string;
   recipientType: 'Assessor' | 'Mensageiro';
+  goal?: number;
   baseAmount: number;
   commissionRate: number;
   commissionAmount: number;
@@ -47,11 +48,13 @@ const formatCurrency = (value: number) => {
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('pt-BR', {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    timeZone: 'UTC'
+    timeZone: 'UTC',
   });
 };
 
@@ -63,6 +66,7 @@ export function CommissionsTable({ data, onEdit }: { data: Commission[]; onEdit:
           <TableHead>Mês/Ano</TableHead>
           <TableHead>Beneficiário</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead className="hidden md:table-cell text-right">Meta</TableHead>
           <TableHead className="hidden md:table-cell text-right">Valor Base</TableHead>
           <TableHead className="hidden sm:table-cell text-right">Taxa (%)</TableHead>
           <TableHead className="text-right">Comissão</TableHead>
@@ -88,6 +92,9 @@ export function CommissionsTable({ data, onEdit }: { data: Commission[]; onEdit:
               <Badge variant={statusVariantMap[commission.status]}>
                 {commission.status}
               </Badge>
+            </TableCell>
+            <TableCell className="hidden md:table-cell text-right">
+                {commission.goal ? formatCurrency(commission.goal) : '-'}
             </TableCell>
             <TableCell className="hidden md:table-cell text-right">{formatCurrency(commission.baseAmount)}</TableCell>
             <TableCell className="hidden sm:table-cell text-right">{commission.commissionRate.toFixed(1)}%</TableCell>

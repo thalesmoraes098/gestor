@@ -13,6 +13,7 @@ type Commission = {
   referenceMonth: string;
   recipientName: string;
   recipientType: 'Assessor' | 'Mensageiro';
+  goal?: number;
   baseAmount: number;
   commissionRate: number;
   commissionAmount: number;
@@ -21,10 +22,10 @@ type Commission = {
 };
 
 const commissionsData: Commission[] = [
-  { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', baseAmount: 10000, commissionRate: 5, commissionAmount: 500, status: 'Paga', paymentDate: '2024-08-05' },
-  { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor', baseAmount: 12500, commissionRate: 5.5, commissionAmount: 687.50, status: 'Pendente' },
+  { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', goal: 15000, baseAmount: 10000, commissionRate: 5, commissionAmount: 500, status: 'Paga', paymentDate: '2024-08-05' },
+  { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor', goal: 18000, baseAmount: 12500, commissionRate: 5.5, commissionAmount: 687.50, status: 'Pendente' },
   { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro', baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga', paymentDate: '2024-08-05' },
-  { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', baseAmount: 9500, commissionRate: 5, commissionAmount: 475, status: 'Paga', paymentDate: '2024-07-05' },
+  { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', goal: 15000, baseAmount: 9500, commissionRate: 5, commissionAmount: 475, status: 'Paga', paymentDate: '2024-07-05' },
   { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro', baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga', paymentDate: '2024-07-05' },
 ];
 

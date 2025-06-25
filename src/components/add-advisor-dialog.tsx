@@ -16,6 +16,7 @@ const addAdvisorSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
+  goal: z.coerce.number().min(0, { message: 'A meta não pode ser negativa.' }),
   commissionPercentage: z.coerce.number().min(0, { message: 'A comissão não pode ser negativa.' }).max(100, { message: 'A comissão não pode ser maior que 100.' }),
   status: z.enum(['Ativo', 'Férias', 'Licença Médica', 'Suspensão', 'Demitido']),
 });
@@ -26,6 +27,7 @@ const defaultFormValues: AddAdvisorFormValues = {
   name: '',
   email: '',
   phone: '',
+  goal: 0,
   commissionPercentage: 0,
   status: 'Ativo',
 };
@@ -55,6 +57,7 @@ export function AddAdvisorDialog({
           name: advisor.name || '',
           email: advisor.email || '',
           phone: advisor.phone || '',
+          goal: advisor.goal || 0,
           commissionPercentage: advisor.commissionPercentage || 0,
           status: advisor.status || 'Ativo',
         });
@@ -114,13 +117,22 @@ export function AddAdvisorDialog({
                   </FormItem>
                 )}/>
                 
-                <FormField control={form.control} name="commissionPercentage" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Percentual de Comissão (%)</FormLabel>
-                    <FormControl><Input type="number" placeholder="5.0" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="goal" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Meta (R$)</FormLabel>
+                            <FormControl><Input type="number" placeholder="15000.00" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="commissionPercentage" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Comissão (%)</FormLabel>
+                            <FormControl><Input type="number" placeholder="5.0" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
 
                 <FormField control={form.control} name="status" render={({ field }) => (
                   <FormItem>

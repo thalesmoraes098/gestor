@@ -84,6 +84,12 @@ export function ViewCommissionDialog({ open, onOpenChange, commission }: { open:
             <span className="text-muted-foreground">Mês de Referência:</span>
             <span className="font-semibold text-right">{commission.referenceMonth}</span>
           </div>
+          {commission.goal && (
+            <div className="grid grid-cols-2 gap-2">
+              <span className="text-muted-foreground">Meta:</span>
+              <span className="font-semibold text-right">{formatCurrency(commission.goal)}</span>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <span className="text-muted-foreground">Valor Base:</span>
             <span className="font-semibold text-right">{formatCurrency(commission.baseAmount)}</span>

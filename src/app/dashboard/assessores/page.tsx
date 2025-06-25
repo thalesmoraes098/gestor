@@ -15,15 +15,16 @@ type Advisor = {
   email: string;
   phone: string;
   commissionPercentage: number;
+  goal: number;
   status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
 };
 
 const advisorsData: Advisor[] = [
-  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', commissionPercentage: 5, status: 'Ativo' },
-  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', commissionPercentage: 5.5, status: 'Ativo' },
-  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', commissionPercentage: 6, status: 'Demitido' },
-  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', commissionPercentage: 4.5, status: 'Férias' },
-  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', commissionPercentage: 5.2, status: 'Suspensão' },
+  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', commissionPercentage: 5, goal: 15000, status: 'Ativo' },
+  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', commissionPercentage: 5.5, goal: 18000, status: 'Ativo' },
+  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', commissionPercentage: 6, goal: 20000, status: 'Demitido' },
+  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', commissionPercentage: 4.5, goal: 12000, status: 'Férias' },
+  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', commissionPercentage: 5.2, goal: 16000, status: 'Suspensão' },
 ];
 
 export default function AssessoresPage() {

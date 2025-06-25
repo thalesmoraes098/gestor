@@ -27,6 +27,7 @@ type Advisor = {
   email: string;
   phone: string;
   commissionPercentage: number;
+  goal: number;
   status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
 };
 
@@ -38,6 +39,13 @@ const statusVariantMap: Record<Advisor['status'], VariantProps<typeof badgeVaria
   Demitido: 'secondary',
 };
 
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
 export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advisor: Advisor) => void; }) {
   return (
     <Table>
@@ -47,6 +55,7 @@ export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advi
           <TableHead>Status</TableHead>
           <TableHead className="hidden md:table-cell">E-mail</TableHead>
           <TableHead className="hidden sm:table-cell">Telefone</TableHead>
+          <TableHead className="text-right">Meta</TableHead>
           <TableHead className="text-right">Comissão (%)</TableHead>
           <TableHead>
             <span className="sr-only">Ações</span>
@@ -69,6 +78,7 @@ export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advi
             </TableCell>
             <TableCell className="hidden md:table-cell">{advisor.email}</TableCell>
             <TableCell className="hidden sm:table-cell">{advisor.phone}</TableCell>
+            <TableCell className="text-right font-medium">{formatCurrency(advisor.goal)}</TableCell>
             <TableCell className="text-right font-medium">{advisor.commissionPercentage.toFixed(1)}%</TableCell>
             <TableCell>
               <DropdownMenu>

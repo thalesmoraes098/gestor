@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 
 const addMessengerSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
+  photoUrl: z.string().url({ message: "Por favor, insira uma URL válida." }).optional().or(z.literal('')),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
   status: z.enum(['Ativo', 'Férias', 'Licença Médica', 'Suspensão', 'Demitido']),
@@ -37,6 +38,7 @@ type AddMessengerFormValues = z.infer<typeof addMessengerSchema>;
 
 const defaultFormValues: AddMessengerFormValues = {
   name: '',
+  photoUrl: '',
   email: '',
   phone: '',
   status: 'Ativo',
@@ -67,6 +69,7 @@ export function AddMessengerDialog({
       if (isEditMode && messenger) {
         form.reset({
           name: messenger.name || '',
+          photoUrl: messenger.photoUrl || '',
           email: messenger.email || '',
           phone: messenger.phone || '',
           status: messenger.status || 'Ativo',
@@ -109,6 +112,14 @@ export function AddMessengerDialog({
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl><Input placeholder="Nome completo do mensageiro" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+
+                <FormField control={form.control} name="photoUrl" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL da Foto</FormLabel>
+                    <FormControl><Input placeholder="https://example.com/foto.png" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>

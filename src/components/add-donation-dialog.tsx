@@ -28,6 +28,14 @@ const addDonationSchema = z.object({
   paymentMethod: z.enum(['PIX', 'Transferência Bancária', 'Coleta', 'Dinheiro', 'Cartão de Crédito']),
   assessor: z.string().optional(),
   messenger: z.string().optional(),
+}).refine(data => {
+    if (data.status === 'Pago') {
+        return !!data.paymentDate;
+    }
+    return true;
+}, {
+    message: "A data de pagamento é obrigatória para doações pagas.",
+    path: ["paymentDate"],
 });
 
 type AddDonationFormValues = z.infer<typeof addDonationSchema>;
@@ -71,6 +79,7 @@ export function AddDonationDialog({
   });
 
   const donorId = form.watch('donorId');
+  const status = form.watch('status');
 
   useEffect(() => {
     if (open) {
@@ -100,6 +109,12 @@ export function AddDonationDialog({
       }
     }
   }, [donorId, donors, isEditMode, form]);
+
+  useEffect(() => {
+    if (status === 'Pago' && !form.getValues('paymentDate')) {
+        form.setValue('paymentDate', new Date(), { shouldValidate: true });
+    }
+  }, [status, form]);
 
   const onSubmit = (data: AddDonationFormValues) => {
     const donor = donors.find(d => d.id === data.donorId);
@@ -204,7 +219,7 @@ export function AddDonationDialog({
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="dueDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Vencimento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10",!field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Selecione a data</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="paymentDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Pagamento (Opcional)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10",!field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Selecione a data</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="paymentDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Pagamento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10",!field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Selecione a data</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 </div>
 
                 <FormField control={form.control} name="status" render={({ field }) => (

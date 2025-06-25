@@ -13,8 +13,8 @@ import { setLoggedInUser } from '@/lib/session';
 
 // Mock user database for login simulation
 const users: (User & { password: string })[] = [
-    { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin', password: 'password' },
-    { id: 'user-1', name: 'Usuário Padrão', email: 'user@email.com', role: 'Usuário', password: 'password' },
+    { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin', password: 'password', photoUrl: 'https://placehold.co/40x40.png' },
+    { id: 'user-1', name: 'Usuário Padrão', email: 'user@email.com', role: 'Usuário', password: 'password', photoUrl: 'https://placehold.co/40x40.png' },
 ];
 
 export default function LoginPage() {

@@ -9,6 +9,7 @@ export type User = {
   name: string;
   email: string;
   role: 'Admin' | 'Usuário';
+  photoUrl?: string;
 };
 
 /**
@@ -30,7 +31,7 @@ export const setLoggedInUser = (user: User | null) => {
 export const getLoggedInUser = (): User | null => {
   if (typeof window === 'undefined') {
     // Default to admin during server-side rendering to prevent UI breakages.
-    return { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin' };
+    return { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin', photoUrl: 'https://placehold.co/40x40.png' };
   }
 
   const userJson = sessionStorage.getItem('loggedInUser');

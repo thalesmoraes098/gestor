@@ -12,8 +12,8 @@ export default function DashboardPage() {
   const [kpiData, setKpiData] = useState<any[]>([]);
   const [advisorPerformanceData, setAdvisorPerformanceData] = useState<any[]>([]);
   const [messengerPerformanceData, setMessengerPerformanceData] = useState<any[]>([]);
-  const [bestAdvisor, setBestAdvisor] = useState<{ name: string; value: number } | null>(null);
-  const [bestMessenger, setBestMessenger] = useState<{ name: string; value: number } | null>(null);
+  const [bestAdvisor, setBestAdvisor] = useState<{ name: string; value: number; photoUrl?: string; } | null>(null);
+  const [bestMessenger, setBestMessenger] = useState<{ name: string; value: number; photoUrl?: string; } | null>(null);
 
   useEffect(() => {
     const today = new Date();
@@ -57,7 +57,7 @@ export default function DashboardPage() {
         const total = donationsThisMonth
           .filter(d => d.assessor === advisor.name)
           .reduce((sum, d) => sum + d.amount, 0);
-        return { name: advisor.name, total };
+        return { name: advisor.name, total, photoUrl: advisor.photoUrl };
       });
 
     setAdvisorPerformanceData(advisorData.filter(item => item.total > 0));
@@ -65,7 +65,7 @@ export default function DashboardPage() {
     if (advisorData.length > 0) {
         const topAdvisor = advisorData.reduce((prev, current) => (prev.total > current.total) ? prev : current);
         if (topAdvisor.total > 0) {
-            setBestAdvisor({ name: topAdvisor.name, value: topAdvisor.total });
+            setBestAdvisor({ name: topAdvisor.name, value: topAdvisor.total, photoUrl: topAdvisor.photoUrl });
         } else {
             setBestAdvisor(null);
         }
@@ -77,7 +77,7 @@ export default function DashboardPage() {
       .filter(m => m.status === 'Ativo')
       .map(messenger => {
         const collections = donationsThisMonth.filter(d => d.messenger === messenger.name).length;
-        return { name: messenger.name, collections };
+        return { name: messenger.name, collections, photoUrl: messenger.photoUrl };
       });
 
     setMessengerPerformanceData(messengerData.filter(item => item.collections > 0));
@@ -85,7 +85,7 @@ export default function DashboardPage() {
     if (messengerData.length > 0) {
         const topMessenger = messengerData.reduce((prev, current) => (prev.collections > current.collections) ? prev : current);
         if (topMessenger.collections > 0) {
-            setBestMessenger({ name: topMessenger.name, value: topMessenger.collections });
+            setBestMessenger({ name: topMessenger.name, value: topMessenger.collections, photoUrl: topMessenger.photoUrl });
         } else {
             setBestMessenger(null);
         }
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                 <CardContent>
                     {bestAdvisor ? (
                         <div className="flex items-center gap-4">
-                            <img src="https://placehold.co/64x64.png" alt="Avatar do melhor assessor" className="w-16 h-16 rounded-full" data-ai-hint="person trophy" />
+                            <img src={bestAdvisor.photoUrl || "https://placehold.co/64x64.png"} alt="Avatar do melhor assessor" className="w-16 h-16 rounded-full object-cover" data-ai-hint="person trophy" />
                             <div>
                                 <p className="text-lg font-bold">{bestAdvisor.name}</p>
                                 <p className="text-xl font-semibold text-primary">{formatCurrency(bestAdvisor.value)}</p>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                 <CardContent>
                      {bestMessenger ? (
                         <div className="flex items-center gap-4">
-                            <img src="https://placehold.co/64x64.png" alt="Avatar do melhor mensageiro" className="w-16 h-16 rounded-full" data-ai-hint="person trophy" />
+                            <img src={bestMessenger.photoUrl || "https://placehold.co/64x64.png"} alt="Avatar do melhor mensageiro" className="w-16 h-16 rounded-full object-cover" data-ai-hint="person trophy" />
                             <div>
                                 <p className="text-lg font-bold">{bestMessenger.name}</p>
                                 <p className="text-xl font-semibold text-primary">{bestMessenger.value} coletas</p>

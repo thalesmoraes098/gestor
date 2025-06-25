@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { getLoggedInUser, type User } from '@/lib/session';
 
 export default function DashboardLayout({
@@ -96,21 +97,33 @@ export default function DashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
              )}
-            <SidebarMenuItem>
-                <SidebarMenuButton tooltip={user?.name || 'Perfil'}>
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://placehold.co/40x40.png" alt={user?.name || 'User'} data-ai-hint="person" />
-                        <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-                    </Avatar>
-                    <span>{user?.name || 'Usuário'}</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
+        <header className="flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
             <SidebarTrigger className="flex md:hidden"/>
+            <div className="flex-1" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={user?.photoUrl || 'https://placehold.co/40x40.png'} alt={user?.name || 'User'} data-ai-hint="person" />
+                    <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>{user?.name}</DropdownMenuItem>
+                <DropdownMenuItem>{user?.email}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link href="/login">Sair</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
         <footer className="p-4 text-center text-sm text-muted-foreground border-t">

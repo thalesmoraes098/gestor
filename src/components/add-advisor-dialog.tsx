@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const addAdvisorSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
+  photoUrl: z.string().url({ message: "Por favor, insira uma URL válida." }).optional().or(z.literal('')),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
   goal: z.coerce.number().min(0, { message: 'A meta não pode ser negativa.' }),
@@ -31,6 +32,7 @@ type AddAdvisorFormValues = z.infer<typeof addAdvisorSchema>;
 
 const defaultFormValues: AddAdvisorFormValues = {
   name: '',
+  photoUrl: '',
   email: '',
   phone: '',
   goal: 0,
@@ -63,6 +65,7 @@ export function AddAdvisorDialog({
       if (isEditMode && advisor) {
         form.reset({
           name: advisor.name || '',
+          photoUrl: advisor.photoUrl || '',
           email: advisor.email || '',
           phone: advisor.phone || '',
           goal: advisor.goal || 0,
@@ -107,6 +110,14 @@ export function AddAdvisorDialog({
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl><Input placeholder="Nome completo do assessor" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}/>
+
+                <FormField control={form.control} name="photoUrl" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL da Foto</FormLabel>
+                    <FormControl><Input placeholder="https://example.com/foto.png" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>

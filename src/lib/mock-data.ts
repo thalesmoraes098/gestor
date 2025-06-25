@@ -4,6 +4,7 @@ export type Advisor = {
   name: string;
   email: string;
   phone: string;
+  photoUrl?: string;
   minCommissionPercentage: number;
   maxCommissionPercentage: number;
   goal: number;
@@ -16,6 +17,7 @@ export type Messenger = {
   name: string;
   email: string;
   phone: string;
+  photoUrl?: string;
   status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
   commissionPercentage?: number;
 };
@@ -93,19 +95,19 @@ type MonthlyResult = {
 
 // Data
 export const advisorsData: Advisor[] = [
-  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', minCommissionPercentage: 3, maxCommissionPercentage: 5, goal: 15000, newClientsGoal: 10, status: 'Ativo' },
-  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5, goal: 18000, newClientsGoal: 12, status: 'Ativo' },
-  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', minCommissionPercentage: 4, maxCommissionPercentage: 6, goal: 20000, newClientsGoal: 15, status: 'Demitido' },
-  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', minCommissionPercentage: 2.5, maxCommissionPercentage: 4.5, goal: 12000, newClientsGoal: 8, status: 'Férias' },
-  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', minCommissionPercentage: 3.2, maxCommissionPercentage: 5.2, goal: 16000, newClientsGoal: 11, status: 'Suspensão' },
+  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', photoUrl: 'https://placehold.co/128x128.png', minCommissionPercentage: 3, maxCommissionPercentage: 5, goal: 15000, newClientsGoal: 10, status: 'Ativo' },
+  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', photoUrl: 'https://placehold.co/128x128.png', minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5, goal: 18000, newClientsGoal: 12, status: 'Ativo' },
+  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', photoUrl: 'https://placehold.co/128x128.png', minCommissionPercentage: 4, maxCommissionPercentage: 6, goal: 20000, newClientsGoal: 15, status: 'Demitido' },
+  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', photoUrl: 'https://placehold.co/128x128.png', minCommissionPercentage: 2.5, maxCommissionPercentage: 4.5, goal: 12000, newClientsGoal: 8, status: 'Férias' },
+  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', photoUrl: 'https://placehold.co/128x128.png', minCommissionPercentage: 3.2, maxCommissionPercentage: 5.2, goal: 16000, newClientsGoal: 11, status: 'Suspensão' },
 ];
 
 export const messengersData: Messenger[] = [
-  { id: 'MEN001', name: 'Fábio Souza', email: 'fabio.souza@example.com', phone: '(11) 91111-1111', status: 'Ativo', commissionPercentage: 2.5 },
-  { id: 'MEN002', name: 'Gabi Lima', email: 'gabi.lima@example.com', phone: '(21) 92222-2222', status: 'Ativo' },
-  { id: 'MEN003', name: 'Hugo Costa', email: 'hugo.costa@example.com', phone: '(51) 93333-3333', status: 'Férias', commissionPercentage: 3 },
-  { id: 'MEN004', name: 'Leo Martins', email: 'leo.martins@example.com', phone: '(31) 94444-4444', status: 'Demitido' },
-  { id: 'MEN005', name: 'Íris Alves', email: 'iris.alves@example.com', phone: '(41) 95555-5555', status: 'Licença Médica' },
+  { id: 'MEN001', name: 'Fábio Souza', email: 'fabio.souza@example.com', phone: '(11) 91111-1111', status: 'Ativo', commissionPercentage: 2.5, photoUrl: 'https://placehold.co/128x128.png' },
+  { id: 'MEN002', name: 'Gabi Lima', email: 'gabi.lima@example.com', phone: '(21) 92222-2222', status: 'Ativo', photoUrl: 'https://placehold.co/128x128.png' },
+  { id: 'MEN003', name: 'Hugo Costa', email: 'hugo.costa@example.com', phone: '(51) 93333-3333', status: 'Férias', commissionPercentage: 3, photoUrl: 'https://placehold.co/128x128.png' },
+  { id: 'MEN004', name: 'Leo Martins', email: 'leo.martins@example.com', phone: '(31) 94444-4444', status: 'Demitido', photoUrl: 'https://placehold.co/128x128.png' },
+  { id: 'MEN005', name: 'Íris Alves', email: 'iris.alves@example.com', phone: '(41) 95555-5555', status: 'Licença Médica', photoUrl: 'https://placehold.co/128x128.png' },
 ];
 
 const today = new Date();

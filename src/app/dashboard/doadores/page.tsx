@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonorsTable } from "@/components/donors-table";
 import { DonorsFilterDialog } from "@/components/donors-filter-dialog";
+import { AddDonorDialog } from "@/components/add-donor-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 
 const donorsData = [
@@ -37,10 +38,12 @@ const donorsData = [
 
 export default function DoadoresPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isAddDonorOpen, setIsAddDonorOpen] = useState(false);
 
   return (
     <>
       <DonorsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} />
+      <AddDonorDialog open={isAddDonorOpen} onOpenChange={setIsAddDonorOpen} />
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
@@ -52,7 +55,7 @@ export default function DoadoresPage() {
               <Filter className="mr-2 h-5 w-5" />
               Filtros
             </Button>
-            <Button className="h-12 rounded-lg font-semibold text-base">
+            <Button className="h-12 rounded-lg font-semibold text-base" onClick={() => setIsAddDonorOpen(true)}>
               <PlusCircle className="mr-2 h-5 w-5" />
               Adicionar Doador
             </Button>

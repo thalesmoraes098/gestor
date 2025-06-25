@@ -27,6 +27,7 @@ type Donor = {
   name: string;
   email: string;
   status: 'Ativo' | 'Inativo' | 'Pendente';
+  assessor: string;
   amount: number;
   joinDate: string;
 };
@@ -57,8 +58,10 @@ export function DonorsTable({ data }: { data: Donor[] }) {
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-[120px]">Código</TableHead>
           <TableHead>Nome</TableHead>
-          <TableHead className="hidden md:table-cell">Status</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="hidden md:table-cell">Assessor</TableHead>
           <TableHead className="hidden md:table-cell text-right">Doação Mensal</TableHead>
           <TableHead className="hidden sm:table-cell">Data de Cadastro</TableHead>
           <TableHead>
@@ -69,17 +72,19 @@ export function DonorsTable({ data }: { data: Donor[] }) {
       <TableBody>
         {data.map((donor) => (
           <TableRow key={donor.id}>
+             <TableCell className="font-mono text-sm text-muted-foreground">{donor.id}</TableCell>
             <TableCell>
               <div className="font-medium">{donor.name}</div>
               <div className="text-sm text-muted-foreground md:hidden">
                 {donor.email}
               </div>
             </TableCell>
-            <TableCell className="hidden md:table-cell">
+            <TableCell>
               <Badge variant={statusVariantMap[donor.status]}>
                 {donor.status}
               </Badge>
             </TableCell>
+            <TableCell className="hidden md:table-cell">{donor.assessor}</TableCell>
             <TableCell className="hidden md:table-cell text-right">
               {formatCurrency(donor.amount)}
             </TableCell>

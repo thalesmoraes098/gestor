@@ -75,28 +75,42 @@ Você precisa das chaves de configuração para que seu aplicativo Next.js possa
     };
     ```
 
-### 4. Configure as Variáveis de Ambiente (Secrets) no App Hosting
+### 4. Configure as Variáveis de Ambiente (Secrets)
 
-Esta é a etapa final e mais importante. Você precisa fornecer os valores das suas credenciais no seu backend do App Hosting.
+Esta é a etapa final e mais importante. Você precisa fornecer suas credenciais do Firebase de forma segura para a sua aplicação. Faremos isso criando "Secrets".
 
-1.  No Console do Firebase, vá para **Build > App Hosting**.
-2.  Você verá seu back-end listado (por exemplo, "gestor"). **Clique no card do seu back-end** para abrir a página de detalhes dele.
-3.  Na página de detalhes, você verá várias abas na parte superior, como "Visão geral", "Lançamentos", etc. Clique na aba **"Configurações"**.
-4.  Dentro da aba "Configurações", você verá um menu à esquerda com as opções "Domínios", "Implantação" e "Ambiente". **Clique em "Ambiente"**.
-5.  **Crie o Ambiente:** A tela solicitará um "Nome do ambiente". Digite `prod` (para "produção") e clique em **"Salvar"**.
-6.  **Adicione os Secrets:** Após salvar, a página deverá ser atualizada e exibir a lista de "Secrets" que definimos no arquivo `apphosting.yaml`. Para cada uma, haverá um campo para adicionar o valor.
+1.  **Acesse a Página do seu Back-end:**
+    *   No Console do Firebase, vá para **Build > App Hosting**.
+    *   Clique no card do seu back-end (chamado **gestor**).
 
-    **Dica de Solução de Problemas:** Se a lista de secrets não aparecer após salvar, tente fazer uma **atualização forçada** da página do navegador (pressionando `Ctrl+Shift+R` em Windows/Linux ou `Cmd+Shift+R` em Mac). Isso geralmente resolve problemas de cache no console.
+2.  **Vá para a Seção de Secrets:**
+    *   Na página de detalhes do back-end, clique na aba **Configurações**.
+    *   No menu à esquerda, clique em **Ambiente**.
 
-7.  Cole o valor correspondente que você copiou do seu `firebaseConfig` no campo apropriado para cada "Secret".
+3.  **Crie os Secrets Manualmente:**
+    *   Você verá um botão **"Adicionar secret"**. Clique nele.
+    *   Um pop-up aparecerá pedindo um **Nome** e um **Valor** para o secret.
+    *   Agora, crie os 6 secrets um por um, usando a tabela abaixo como referência. Copie o **Nome do Secret** exatamente como está na tabela e cole o **Valor** correspondente do seu objeto `firebaseConfig`.
 
-| Nome do Secret (no App Hosting)       | Valor (do seu `firebaseConfig`)     |
-| ------------------------------------- | ----------------------------------- |
-| `FIREBASE_API_KEY`                    | O valor da chave `apiKey`           |
-| `FIREBASE_AUTH_DOMAIN`                | O valor da chave `authDomain`       |
-| `FIREBASE_PROJECT_ID`                 | O valor da chave `projectId`        |
-| `FIREBASE_STORAGE_BUCKET`             | O valor da chave `storageBucket`    |
-| `FIREBASE_MESSAGING_SENDER_ID`        | O valor da chave `messagingSenderId`|
-| `FIREBASE_APP_ID`                     | O valor da chave `appId`            |
+    **Tabela de Secrets:**
 
-Após configurar essas variáveis, sua aplicação estará conectada ao seu projeto Firebase e pronta para ser publicada.
+    | Nome do Secret (para criar no Firebase) | Valor (do seu `firebaseConfig`)     |
+    | ------------------------------------- | ----------------------------------- |
+    | `FIREBASE_API_KEY`                    | O valor da sua chave `apiKey`           |
+    | `FIREBASE_AUTH_DOMAIN`                | O valor da sua chave `authDomain`       |
+    | `FIREBASE_PROJECT_ID`                 | O valor da sua chave `projectId`        |
+    | `FIREBASE_STORAGE_BUCKET`             | O valor da sua chave `storageBucket`    |
+    | `FIREBASE_MESSAGING_SENDER_ID`        | O valor da sua chave `messagingSenderId`|
+    | `FIREBASE_APP_ID`                     | O valor da sua chave `appId`            |
+
+    *   **Exemplo para o primeiro secret:**
+        *   Nome do Secret: `FIREBASE_API_KEY`
+        *   Valor do Secret: `AIza...` (cole sua chave aqui)
+        *   Clique em "Salvar".
+
+    *   Repita o processo clicando em "Adicionar secret" novamente para os outros 5 itens da tabela.
+
+4.  **Verifique a Lista:**
+    *   Após salvar todos os 6, você verá a lista completa de secrets na tela.
+
+Com isso, sua aplicação estará 100% configurada e pronta para ser publicada. O arquivo `apphosting.yaml` no seu código já está preparado para usar esses secrets que você acabou de criar.

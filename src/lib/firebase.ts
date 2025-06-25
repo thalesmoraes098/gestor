@@ -12,6 +12,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Check for missing environment variables to provide a clearer error during build/startup
+const missingConfig = Object.entries(firebaseConfig).find(([key, value]) => !value);
+if (missingConfig) {
+  throw new Error(`Firebase config is missing required environment variable: ${missingConfig[0]}. Check your .env.local file or App Hosting environment variables.`);
+}
+
+
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);

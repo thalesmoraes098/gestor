@@ -142,7 +142,7 @@ export default function DashboardLayout({
                     <DropdownMenuTrigger asChild>
                          <button className="flex items-center gap-3 w-full p-2 text-sm font-medium text-sidebar-foreground rounded-md hover:bg-sidebar-accent">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src="https://placehold.co/100x100.png" alt="@user" />
+                              <AvatarImage src="https://placehold.co/100x100.png" alt="@user" data-ai-hint="male avatar" />
                               <AvatarFallback>AD</AvatarFallback>
                             </Avatar>
                             <span className="group-data-[collapsible=icon]:hidden">Admin</span>
@@ -176,7 +176,7 @@ export default function DashboardLayout({
                   </button>
                 </div>
             </header>
-            <main className="flex-1 p-4 sm:p-6">{children}</main>
+            <main className="flex-1 p-4 sm:p-6 bg-muted/40">{children}</main>
         </div>
       </SidebarInset>
     </SidebarProvider>

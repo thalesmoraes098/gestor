@@ -84,7 +84,10 @@ Esta é a etapa final e mais importante. Você precisa fornecer os valores das s
 3.  Na página de detalhes, você verá várias abas na parte superior, como "Visão geral", "Lançamentos", etc. Clique na aba **"Configurações"**.
 4.  Dentro da aba "Configurações", você verá um menu à esquerda com as opções "Domínios", "Implantação" e "Ambiente". **Clique em "Ambiente"**.
 5.  **Crie o Ambiente:** A tela solicitará um "Nome do ambiente". Digite `prod` (para "produção") e clique em **"Salvar"**.
-6.  **Adicione os Secrets:** Após salvar, a página será atualizada e exibirá a lista de "Secrets" que definimos no arquivo `apphosting.yaml`. Para cada uma, haverá um campo para adicionar o valor.
+6.  **Adicione os Secrets:** Após salvar, a página deverá ser atualizada e exibir a lista de "Secrets" que definimos no arquivo `apphosting.yaml`. Para cada uma, haverá um campo para adicionar o valor.
+
+    **Dica de Solução de Problemas:** Se a lista de secrets não aparecer após salvar, tente fazer uma **atualização forçada** da página do navegador (pressionando `Ctrl+Shift+R` em Windows/Linux ou `Cmd+Shift+R` em Mac). Isso geralmente resolve problemas de cache no console.
+
 7.  Cole o valor correspondente que você copiou do seu `firebaseConfig` no campo apropriado para cada "Secret".
 
 | Nome do Secret (no App Hosting)       | Valor (do seu `firebaseConfig`)     |

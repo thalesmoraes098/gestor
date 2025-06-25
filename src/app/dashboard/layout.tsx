@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart,
   Bike,
@@ -12,6 +12,7 @@ import {
   Percent,
   Settings,
   Users,
+  User as UserIcon,
 } from 'lucide-react';
 
 import {
@@ -29,7 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { getLoggedInUser, type User } from '@/lib/session';
+import { getLoggedInUser, setLoggedInUser, type User } from '@/lib/session';
 
 export default function DashboardLayout({
   children,
@@ -37,11 +38,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
     setUser(getLoggedInUser());
-  }, []);
+  }, [pathname]);
 
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -54,6 +56,11 @@ export default function DashboardLayout({
   ];
 
   const settingsMenuItem = { href: '/dashboard/configuracoes', label: 'Configurações', icon: Settings };
+  
+  const handleLogout = () => {
+    setLoggedInUser(null);
+    router.push('/login');
+  };
 
   return (
     <SidebarProvider>
@@ -116,11 +123,15 @@ export default function DashboardLayout({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>{user?.name}</DropdownMenuItem>
-                <DropdownMenuItem>{user?.email}</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/dashboard/perfil">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Meu Perfil</span>
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/login">Sair</Link>
+                <DropdownMenuItem onSelect={handleLogout}>
+                  Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

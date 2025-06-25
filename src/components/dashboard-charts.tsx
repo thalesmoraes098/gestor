@@ -104,3 +104,35 @@ export function SalesDistributionChart({ data }: { data: any[] }) {
         </ChartContainer>
     )
 }
+
+const performanceReportChartConfig: ChartConfig = {
+  Resultado: {
+    label: "Resultado",
+    color: "hsl(var(--chart-1))",
+  },
+  Meta: {
+    label: "Meta",
+    color: "hsl(var(--chart-4))",
+  },
+}
+
+export function PerformanceReportChart({ data }: { data: any[] }) {
+  return (
+    <ChartContainer config={performanceReportChartConfig} className="h-[250px] w-full">
+        <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="name"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+          />
+          <YAxis />
+          <Tooltip content={<ChartTooltipContent />} />
+          <Legend />
+          <Bar dataKey="Resultado" fill="var(--color-Resultado)" radius={4} />
+          <Bar dataKey="Meta" fill="var(--color-Meta)" radius={4} />
+        </BarChart>
+    </ChartContainer>
+  )
+}

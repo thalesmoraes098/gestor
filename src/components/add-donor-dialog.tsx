@@ -34,6 +34,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2 } from 'lucide-react';
+import { advisorNames } from '@/lib/mock-data';
 
 const addressSchema = z.object({
   cep: z.string().optional(),
@@ -80,8 +81,6 @@ const defaultFormValues = {
     reference: '',
   }]
 };
-
-const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Juliana Lima', 'Direto'];
 
 export function AddDonorDialog({
   open,
@@ -211,7 +210,7 @@ export function AddDonorDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {assessors.map((assessor) => (
+                          {advisorNames.map((assessor) => (
                             <SelectItem key={assessor} value={assessor}>
                               {assessor}
                             </SelectItem>

@@ -35,6 +35,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { advisorNames } from '@/lib/mock-data';
 
 const filterSchema = z.object({
   status: z.enum(['todos', 'ativo', 'inativo', 'pendente']).default('todos'),
@@ -46,8 +47,6 @@ const filterSchema = z.object({
 });
 
 type FilterFormValues = z.infer<typeof filterSchema>;
-
-const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Direto', 'Juliana Lima'];
 
 export function DonorsFilterDialog({
   open,
@@ -147,7 +146,7 @@ export function DonorsFilterDialog({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="todos">Todos Assessores</SelectItem>
-                        {assessors.map((assessor) => (
+                        {advisorNames.map((assessor) => (
                           <SelectItem key={assessor} value={assessor}>
                             {assessor}
                           </SelectItem>

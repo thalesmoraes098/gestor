@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
+import { advisorNames, messengerNames, donorOptions } from '@/lib/mock-data';
 
 
 const addDonationSchema = z.object({
@@ -25,23 +26,12 @@ const addDonationSchema = z.object({
   dueDate: z.date({ required_error: "A data de vencimento é obrigatória." }),
   paymentDate: z.date().optional(),
   status: z.enum(['Pago', 'Pendente', 'Atrasado', 'Cancelado']),
-  paymentMethod: z.enum(['PIX', 'Transferência Bancária', 'Coleta']),
+  paymentMethod: z.enum(['PIX', 'Transferência Bancária', 'Coleta', 'Dinheiro', 'Cartão de Crédito']),
   assessor: z.string().optional(),
   messenger: z.string().optional(),
 });
 
 type AddDonationFormValues = z.infer<typeof addDonationSchema>;
-
-const donors = [
-    { id: 'DON001', name: 'João da Silva' },
-    { id: 'DON002', name: 'Maria Oliveira' },
-    { id: 'DON003', name: 'Carlos Pereira' },
-    { id: 'DON004', name: 'Ana Costa' },
-    { id: 'DON005', name: 'Pedro Santos' },
-    { id: 'DON006', name: 'Sofia Lima' },
-];
-const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Direto', 'Juliana Lima'];
-const messengers = ['Fábio', 'Gabi', 'Hugo', 'Leo', 'Íris'];
 
 const defaultFormValues: AddDonationFormValues = {
   donorId: '',
@@ -65,8 +55,7 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
   useEffect(() => {
     if (open) {
       if (isEditMode && donation) {
-        // Here you would find the donor by donation.donorCode, but for now, we map by name.
-        const donor = donors.find(d => d.name === donation.donorName);
+        const donor = donorOptions.find(d => d.id === donation.donorCode);
         form.reset({
           donorId: donor?.id || '',
           amount: donation.amount || 0,
@@ -123,7 +112,7 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
                               )}
                             >
                               {field.value
-                                ? donors.find(
+                                ? donorOptions.find(
                                     (donor) => donor.id === field.value
                                   )?.name
                                 : "Selecione o doador"}
@@ -137,7 +126,7 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
                             <CommandList>
                               <CommandEmpty>Nenhum doador encontrado.</CommandEmpty>
                               <CommandGroup>
-                                {donors.map((donor) => (
+                                {donorOptions.map((donor) => (
                                   <CommandItem
                                     value={`${donor.name} ${donor.id}`}
                                     key={donor.id}
@@ -205,6 +194,8 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
                         <SelectItem value="PIX">PIX</SelectItem>
                         <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
                         <SelectItem value="Coleta">Coleta</SelectItem>
+                        <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -213,10 +204,10 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="assessor" render={({ field }) => (
-                        <FormItem><FormLabel>Assessor</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{assessors.map((assessor) => (<SelectItem key={assessor} value={assessor}>{assessor}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Assessor</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{advisorNames.map((assessor) => (<SelectItem key={assessor} value={assessor}>{assessor}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="messenger" render={({ field }) => (
-                        <FormItem><FormLabel>Mensageiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{messengers.map((messenger) => (<SelectItem key={messenger} value={messenger}>{messenger}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Mensageiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{messengerNames.map((messenger) => (<SelectItem key={messenger} value={messenger}>{messenger}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )}/>
                 </div>
               </div>

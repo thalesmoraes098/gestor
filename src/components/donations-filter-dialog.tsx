@@ -35,6 +35,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { advisorNames, messengerNames } from '@/lib/mock-data';
 
 const filterSchema = z.object({
   status: z.enum(['todos', 'pago', 'pendente', 'atrasado', 'cancelado']).default('todos'),
@@ -47,9 +48,6 @@ const filterSchema = z.object({
 });
 
 type FilterFormValues = z.infer<typeof filterSchema>;
-
-const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Direto', 'Juliana Lima'];
-const messengers = ['Fábio', 'Gabi', 'Hugo', 'Leo', 'Íris'];
 
 export function DonationsFilterDialog({
   open,
@@ -129,7 +127,7 @@ export function DonationsFilterDialog({
                         </FormControl>
                         <SelectContent>
                             <SelectItem value="todos">Todos Assessores</SelectItem>
-                            {assessors.map((assessor) => (<SelectItem key={assessor} value={assessor}>{assessor}</SelectItem>))}
+                            {advisorNames.map((assessor) => (<SelectItem key={assessor} value={assessor}>{assessor}</SelectItem>))}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -148,7 +146,7 @@ export function DonationsFilterDialog({
                         </FormControl>
                         <SelectContent>
                             <SelectItem value="todos">Todos Mensageiros</SelectItem>
-                            {messengers.map((messenger) => (<SelectItem key={messenger} value={messenger}>{messenger}</SelectItem>))}
+                            {messengerNames.map((messenger) => (<SelectItem key={messenger} value={messenger}>{messenger}</SelectItem>))}
                         </SelectContent>
                         </Select>
                         <FormMessage />

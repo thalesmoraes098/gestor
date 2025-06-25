@@ -7,23 +7,8 @@ import { MessengersTable } from "@/components/messengers-table";
 import { MessengersFilterDialog } from "@/components/messengers-filter-dialog";
 import { AddMessengerDialog } from "@/components/add-messenger-dialog";
 import { Filter, PlusCircle } from "lucide-react";
-
-type Messenger = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
-  commissionPercentage?: number;
-};
-
-const messengersData: Messenger[] = [
-  { id: 'MEN001', name: 'Fábio Souza', email: 'fabio.souza@example.com', phone: '(11) 91111-1111', status: 'Ativo', commissionPercentage: 2.5 },
-  { id: 'MEN002', name: 'Gabi Lima', email: 'gabi.lima@example.com', phone: '(21) 92222-2222', status: 'Ativo' },
-  { id: 'MEN003', name: 'Hugo Costa', email: 'hugo.costa@example.com', phone: '(51) 93333-3333', status: 'Férias', commissionPercentage: 3 },
-  { id: 'MEN004', name: 'Leo Martins', email: 'leo.martins@example.com', phone: '(31) 94444-4444', status: 'Demitido' },
-  { id: 'MEN005', name: 'Íris Alves', email: 'iris.alves@example.com', phone: '(41) 95555-5555', status: 'Licença Médica' },
-];
+import type { Messenger } from "@/lib/mock-data";
+import { messengersData } from "@/lib/mock-data";
 
 export default function MensageirosPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);

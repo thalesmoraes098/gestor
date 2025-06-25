@@ -8,26 +8,8 @@ import { AdvisorsFilterDialog } from "@/components/advisors-filter-dialog";
 import { AddAdvisorDialog } from "@/components/add-advisor-dialog";
 import { ReallocateClientsDialog } from "@/components/reallocate-clients-dialog";
 import { Filter, PlusCircle } from "lucide-react";
-
-type Advisor = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  minCommissionPercentage: number;
-  maxCommissionPercentage: number;
-  goal: number;
-  newClientsGoal: number;
-  status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
-};
-
-const advisorsData: Advisor[] = [
-  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', minCommissionPercentage: 3, maxCommissionPercentage: 5, goal: 15000, newClientsGoal: 10, status: 'Ativo' },
-  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5, goal: 18000, newClientsGoal: 12, status: 'Ativo' },
-  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', minCommissionPercentage: 4, maxCommissionPercentage: 6, goal: 20000, newClientsGoal: 15, status: 'Demitido' },
-  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', minCommissionPercentage: 2.5, maxCommissionPercentage: 4.5, goal: 12000, newClientsGoal: 8, status: 'Férias' },
-  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', minCommissionPercentage: 3.2, maxCommissionPercentage: 5.2, goal: 16000, newClientsGoal: 11, status: 'Suspensão' },
-];
+import type { Advisor } from "@/lib/mock-data";
+import { advisorsData } from "@/lib/mock-data";
 
 export default function AssessoresPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);

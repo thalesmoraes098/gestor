@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar as CalendarIcon, Download, ChevronsUpDown, Check } from 'lucide-react';
@@ -72,7 +70,7 @@ export default function RelatoriosPage() {
     resolver: zodResolver(reportSchema),
   });
 
-  const onSubmit = (data: ReportFormValues) => {
+  const onSubmit = async (data: ReportFormValues) => {
     setChartData(null);
     setChartTitle('');
     
@@ -123,6 +121,9 @@ export default function RelatoriosPage() {
     }
     
     // PDF Generation
+    const { jsPDF } = await import('jspdf');
+    const autoTable = (await import('jspdf-autotable')).default;
+
     const doc = new jsPDF();
     
     doc.setFontSize(18);

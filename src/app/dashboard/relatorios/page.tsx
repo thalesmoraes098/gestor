@@ -18,7 +18,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PerformanceReportChart } from '@/components/dashboard-charts';
-import type { Advisor, Messenger, Donation } from '@/lib/mock-data';
+import type { Advisor, Messenger, Donation, Donor } from '@/lib/mock-data';
 
 const reportSchema = z.object({
   collaboratorId: z.string({ required_error: 'Por favor, selecione um colaborador.' }),
@@ -47,17 +47,26 @@ export default function RelatoriosPage() {
   
   // Firestore data
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [donors, setDonors] = useState<Donor[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [messengers, setMessengers] = useState<Messenger[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Settings
   const [closingDay, setClosingDay] = useState('5');
-  const [loadingSettings, setLoadingSettings] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+    let loadedCount = 0;
+    const totalToLoad = 5; // donations, donors, advisors, messengers, settings
+    const doneLoading = () => {
+        loadedCount++;
+        if (loadedCount === totalToLoad) {
+            setLoading(false);
+        }
+    };
+
     const fetchSettings = async () => {
-        setLoadingSettings(true);
         try {
             const settingsRef = doc(db, "system_settings", "general");
             const settingsSnap = await getDoc(settingsRef);
@@ -67,26 +76,30 @@ export default function RelatoriosPage() {
         } catch (error) {
             console.error("Error fetching settings, using default.", error);
         }
-        setLoadingSettings(false);
+        doneLoading();
     };
     fetchSettings();
-  }, []);
 
-  useEffect(() => {
-    setLoading(true);
     const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
       setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
+      doneLoading();
+    });
+    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
+        setDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donor)));
+        doneLoading();
     });
     const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
       setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
+      doneLoading();
     });
     const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
       setMessengers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Messenger)));
-      setLoading(false);
+      doneLoading();
     });
 
     return () => {
       unsubDonations();
+      unsubDonors();
       unsubAdvisors();
       unsubMessengers();
     };
@@ -128,12 +141,12 @@ export default function RelatoriosPage() {
     const year = parseInt(data.year, 10);
     const closingDayNum = parseInt(closingDay, 10);
 
-    const startDate = new Date(year, monthIndex, closingDayNum + 1);
-    const endDate = new Date(year, monthIndex + 1, closingDayNum);
+    const startDate = new Date(Date.UTC(year, monthIndex, closingDayNum + 1));
+    const endDate = new Date(Date.UTC(year, monthIndex + 1, closingDayNum));
 
     const donationsInPeriod = donations.filter(d => {
       if (!d.paymentDate) return false;
-      const paymentDate = new Date(d.paymentDate);
+      const paymentDate = new Date(`${d.paymentDate}T00:00:00Z`);
       const isCorrectCollaborator = (d.assessor === collaborator.name && collaborator.type === 'Assessor') || 
                                      (d.messenger === collaborator.name && collaborator.type === 'Mensageiro');
       return isCorrectCollaborator && d.status === 'Pago' && paymentDate >= startDate && paymentDate <= endDate;
@@ -146,12 +159,20 @@ export default function RelatoriosPage() {
 
     let commissionRate = 0;
     let commissionAmount = 0;
+    let newClientsResult = 0;
     const totalValue = donationsInPeriod.reduce((sum, d) => sum + d.amount, 0);
 
     if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData) {
       const goalMet = totalValue >= fullCollaboratorData.goal;
       commissionRate = goalMet ? fullCollaboratorData.maxCommissionPercentage : fullCollaboratorData.minCommissionPercentage;
       commissionAmount = totalValue * (commissionRate / 100);
+
+      newClientsResult = donors.filter(donor => {
+          if (donor.assessor !== fullCollaboratorData.name || !donor.joinDate) return false;
+          const joinDate = new Date(`${donor.joinDate}T00:00:00Z`);
+          return joinDate >= startDate && joinDate <= endDate;
+      }).length;
+
       setChartData([{ name: collaborator.name, Resultado: totalValue, Meta: fullCollaboratorData.goal }]);
       setChartTitle(`Desempenho vs. Meta de ${collaborator.name}`);
     } else if (collaborator.type === 'Mensageiro' && 'commissionPercentage' in fullCollaboratorData) {
@@ -212,14 +233,19 @@ export default function RelatoriosPage() {
     
     let summaryText = `Total Arrecadado/Coletado: ${formatCurrency(totalValue)}\nComissão Calculada: ${formatCurrency(commissionAmount)}`;
 
-    if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData && fullCollaboratorData.goal > 0) {
-        const goal = fullCollaboratorData.goal;
+    if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData) {
+        const goal = fullCollaboratorData.goal || 0;
         const goalMet = totalValue >= goal;
-        const achievement = (totalValue / goal) * 100;
+        const achievement = goal > 0 ? (totalValue / goal) * 100 : 0;
         
         summaryText += `\n\nMeta Arrecadação: ${formatCurrency(goal)}`;
         summaryText += `\nDesempenho da Meta: ${achievement.toFixed(2)}% (${goalMet ? 'Atingida' : 'Não Atingida'})`;
         summaryText += `\nComissão Aplicada: ${commissionRate.toFixed(1)}% (${goalMet ? 'Máxima' : 'Mínima'})`;
+
+        const newClientsGoal = fullCollaboratorData.newClientsGoal ?? 0;
+        const newClientsGoalMet = newClientsResult >= newClientsGoal;
+        summaryText += `\n\nMeta Novos Clientes: ${newClientsGoal}`;
+        summaryText += `\nResultado Novos Clientes: ${newClientsResult} (${newClientsGoalMet ? 'Atingida' : 'Não Atingida'})`;
     }
 
     doc.text(summaryText, 14, finalY2 + 22);
@@ -243,10 +269,10 @@ export default function RelatoriosPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading || loadingSettings ? <p>Carregando dados...</p> : (
+          {loading ? <p>Carregando dados...</p> : (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <fieldset disabled={loading || loadingSettings}>
+                <fieldset disabled={loading}>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <FormField
                       control={form.control}

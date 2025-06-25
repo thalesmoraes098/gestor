@@ -75,17 +75,14 @@ Você precisa das chaves de configuração para que seu aplicativo Next.js possa
     };
     ```
 
-### 4. Configure as Variáveis de Ambiente na Sua Aplicação
+### 4. Configure as Variáveis de Ambiente (Secrets) no App Hosting
 
-Agora, você precisa adicionar essas chaves à configuração do seu ambiente de desenvolvimento ou publicação.
+Agora, você precisa fornecer os valores para as chaves no seu backend do App Hosting.
 
-Se estiver usando o Firebase App Hosting (como configurado neste projeto), adicione essas chaves como "Secrets" no seu backend do App Hosting. Os nomes das secrets já estão definidos no arquivo `apphosting.yaml`. Você só precisa fornecer os valores:
-
-*   `FIREBASE_API_KEY`
-*   `FIREBASE_AUTH_DOMAIN`
-*   `FIREBASE_PROJECT_ID`
-*   `FIREBASE_STORAGE_BUCKET`
-*   `FIREBASE_MESSAGING_SENDER_ID`
-*   `FIREBASE_APP_ID`
+1.  No Console do Firebase, vá para a seção **App Hosting**.
+2.  Você verá seu back-end listado (por exemplo, "gestor"). **Clique no card do seu back-end** para abrir a página de detalhes dele.
+3.  Na página de detalhes do back-end, procure uma aba ou seção de **Configuração**.
+4.  Lá, você verá a lista de secrets que definimos no arquivo `apphosting.yaml` (como `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, etc.).
+5.  Para cada secret, clique em "Criar secret" ou "Adicionar valor" e cole o valor correspondente que você copiou do `firebaseConfig`.
 
 Após configurar essas variáveis, sua aplicação estará conectada ao seu projeto Firebase e pronta para ser publicada.

@@ -1,5 +1,3 @@
-'use client';
-
 // Types
 export type Advisor = {
   id: string;

@@ -134,8 +134,7 @@ export default function DoadoresPage() {
           toast({ title: 'Doador Atualizado', description: 'Os dados do doador foram atualizados.' });
       } else {
           const newDonorData = { 
-              ...data, 
-              status: 'Ativo',
+              ...data,
               amount: 0,
               joinDate: new Date().toISOString().split('T')[0],
               history: [],

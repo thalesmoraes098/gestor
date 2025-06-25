@@ -51,6 +51,7 @@ const addDonorSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
   code: z.string().optional(),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
+  status: z.enum(['Ativo', 'Inativo', 'Pendente']),
   assessor: z.string().optional(),
   isLoyal: z.boolean().default(false),
   paymentDay: z.string().optional(),
@@ -66,6 +67,7 @@ const defaultFormValues: Omit<AddDonorFormValues, 'phones' | 'addresses'> & { ph
   name: '',
   code: '',
   email: '',
+  status: 'Ativo',
   assessor: '',
   isLoyal: false,
   paymentDay: '',
@@ -109,6 +111,7 @@ export function AddDonorDialog({
           name: donor.name || '',
           code: donor.code || '',
           email: donor.email || '',
+          status: donor.status || 'Ativo',
           assessor: donor.assessor || '',
           isLoyal: donor.isLoyal || false,
           paymentDay: donor.paymentDay || '',
@@ -159,46 +162,62 @@ export function AddDonorDialog({
             <ScrollArea className="h-[60vh]">
               <div className="grid gap-6 py-4 px-2 pr-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome do Doador</FormLabel>
-                        <FormControl>
-                          <Input placeholder="João da Silva" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Código do Doador</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Será gerado automaticamente se vazio" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nome do Doador</FormLabel>
+                            <FormControl>
+                            <Input placeholder="João da Silva" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>E-mail</FormLabel>
+                            <FormControl>
+                                <Input placeholder="contato@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input placeholder="contato@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Código do Doador</FormLabel>
+                            <FormControl>
+                            <Input placeholder="Será gerado automaticamente se vazio" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField control={form.control} name="status" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Status</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                <SelectItem value="Ativo">Ativo</SelectItem>
+                                <SelectItem value="Inativo">Inativo</SelectItem>
+                                <SelectItem value="Pendente">Pendente</SelectItem>
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
                 
                 <FormField
                   control={form.control}

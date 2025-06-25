@@ -1,16 +1,2 @@
-import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  output: 'standalone', // Recommended for App Hosting
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
-      },
-    ],
-  },
-};
-
-export default nextConfig;
+// This file has been replaced by next.config.js
+// Please use next.config.js for any new configurations.

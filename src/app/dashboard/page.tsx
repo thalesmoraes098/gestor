@@ -3,8 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign, HandHeart, Users, Bike, Trophy } from "lucide-react"
 import { AdvisorSalesChart, MessengerPerformanceChart } from "@/components/dashboard-charts"
-import { advisorsData, donationsData, donorsData, messengersData } from "@/lib/mock-data";
+import type { Advisor, Donation, Donor, Messenger } from "@/lib/mock-data";
 import { useEffect, useState } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
@@ -14,15 +17,48 @@ export default function DashboardPage() {
   const [messengerPerformanceData, setMessengerPerformanceData] = useState<any[]>([]);
   const [bestAdvisor, setBestAdvisor] = useState<{ name: string; value: number; photoUrl?: string; } | null>(null);
   const [bestMessenger, setBestMessenger] = useState<{ name: string; value: number; photoUrl?: string; } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // States for Firestore data
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
+  const [messengers, setMessengers] = useState<Messenger[]>([]);
 
   useEffect(() => {
+    setLoading(true);
+    const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
+        setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
+    });
+    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
+        setDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donor)));
+    });
+    const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
+        setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
+    });
+    const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
+        setMessengers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Messenger)));
+        setLoading(false);
+    });
+
+    return () => {
+        unsubDonations();
+        unsubDonors();
+        unsubAdvisors();
+        unsubMessengers();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loading || !donations || !donors || !advisors || !messengers) return;
+
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     const todayString = today.toISOString().split('T')[0];
 
     // KPI Calculations
-    const donationsThisMonth = donationsData.filter(d => {
+    const donationsThisMonth = donations.filter(d => {
       if (!d.paymentDate) return false;
       const paymentDate = new Date(d.paymentDate);
       return d.status === 'Pago' && paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
@@ -30,14 +66,14 @@ export default function DashboardPage() {
 
     const totalDonationsValue = donationsThisMonth.reduce((sum, d) => sum + d.amount, 0);
 
-    const newDonorsThisMonth = donorsData.filter(d => {
+    const newDonorsThisMonth = donors.filter(d => {
       const joinDate = new Date(d.joinDate);
       return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear;
     }).length;
 
-    const pendingDonationsCount = donationsData.filter(d => d.status === 'Pendente').length;
+    const pendingDonationsCount = donations.filter(d => d.status === 'Pendente').length;
 
-    const collectionsTodayCount = donationsData.filter(d => {
+    const collectionsTodayCount = donations.filter(d => {
       return d.status === 'Pago' &&
         d.paymentDate === todayString &&
         (d.paymentMethod === 'Coleta' || d.paymentMethod === 'Dinheiro');
@@ -51,7 +87,7 @@ export default function DashboardPage() {
     ]);
 
     // Chart and Ranking Data Calculations
-    const advisorData = advisorsData
+    const advisorData = advisors
       .filter(a => a.status === 'Ativo')
       .map(advisor => {
         const total = donationsThisMonth
@@ -64,7 +100,7 @@ export default function DashboardPage() {
     
     if (advisorData.length > 0) {
         const topAdvisor = advisorData.reduce((prev, current) => (prev.total > current.total) ? prev : current);
-        if (topAdvisor.total > 0) {
+        if (topAdvisor && topAdvisor.total > 0) {
             setBestAdvisor({ name: topAdvisor.name, value: topAdvisor.total, photoUrl: topAdvisor.photoUrl });
         } else {
             setBestAdvisor(null);
@@ -73,7 +109,7 @@ export default function DashboardPage() {
         setBestAdvisor(null);
     }
 
-    const messengerData = messengersData
+    const messengerData = messengers
       .filter(m => m.status === 'Ativo')
       .map(messenger => {
         const collections = donationsThisMonth.filter(d => d.messenger === messenger.name).length;
@@ -84,7 +120,7 @@ export default function DashboardPage() {
 
     if (messengerData.length > 0) {
         const topMessenger = messengerData.reduce((prev, current) => (prev.collections > current.collections) ? prev : current);
-        if (topMessenger.collections > 0) {
+        if (topMessenger && topMessenger.collections > 0) {
             setBestMessenger({ name: topMessenger.name, value: topMessenger.collections, photoUrl: topMessenger.photoUrl });
         } else {
             setBestMessenger(null);
@@ -93,8 +129,45 @@ export default function DashboardPage() {
         setBestMessenger(null);
     }
 
-  }, []);
+  }, [donations, donors, advisors, messengers, loading]);
 
+  if (loading) {
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[...Array(4)].map((_, i) => (
+                    <Card key={i} className="rounded-2xl border-0 shadow-lg p-6">
+                        <Skeleton className="h-5 w-1/2 mb-2" />
+                        <Skeleton className="h-8 w-1/3" />
+                        <Skeleton className="h-4 w-2/3 mt-1" />
+                    </Card>
+                ))}
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                    <Card key={i} className="rounded-2xl border-0 shadow-lg p-6">
+                        <Skeleton className="h-6 w-1/2 mb-4" />
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="w-16 h-16 rounded-full" />
+                            <div className="flex-1 space-y-2">
+                                <Skeleton className="h-5 w-3/4" />
+                                <Skeleton className="h-6 w-1/2" />
+                            </div>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                    <Card key={i} className="rounded-2xl border-0 shadow-lg p-6">
+                        <Skeleton className="h-6 w-1/2 mb-4" />
+                        <Skeleton className="h-[250px] w-full" />
+                    </Card>
+                ))}
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">

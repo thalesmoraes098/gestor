@@ -149,16 +149,6 @@ export const donorsData: Donor[] = [
   ]},
 ];
 
-export const donationsData: Donation[] = [
-    { id: 'DOA001', donorName: 'João da Silva', donorCode: 'DON001', amount: 150.00, paymentDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 15)), dueDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 15)), status: 'Pago', assessor: 'Carlos Almeida', messenger: 'Fábio Souza', paymentMethod: 'Dinheiro' },
-    { id: 'DOA002', donorName: 'Maria Oliveira', donorCode: 'DON002', amount: 200.00, paymentDate: '', dueDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 20)), status: 'Pendente', assessor: 'Ana Beatriz', messenger: 'Gabi Lima', paymentMethod: 'Cartão de Crédito' },
-    { id: 'DOA003', donorName: 'Ana Costa', donorCode: 'DON004', amount: 100.00, paymentDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 6)), dueDate: getDateString(new Date(today.getFullYear(), today.getMonth(), 5)), status: 'Pago', assessor: 'Direto', messenger: 'Hugo Costa', paymentMethod: 'PIX' },
-    { id: 'DOA004', donorName: 'Sofia Lima', donorCode: 'DON006', amount: 300.00, paymentDate: '', dueDate: getDateString(new Date(today.getFullYear(), today.getMonth() -1, 18)), status: 'Atrasado', assessor: 'Ana Beatriz', messenger: 'Leo Martins', paymentMethod: 'Dinheiro' },
-    { id: 'DOA005', donorName: 'Carlos Pereira', donorCode: 'DON003', amount: 50.00, paymentDate: '', dueDate: '2024-03-10', status: 'Cancelado', assessor: 'Carlos Almeida', messenger: '-', paymentMethod: 'Dinheiro' },
-    { id: 'DOA006', donorName: 'João da Silva', donorCode: 'DON001', amount: 400.00, paymentDate: getDateString(today), dueDate: getDateString(today), status: 'Pago', assessor: 'Carlos Almeida', messenger: 'Fábio Souza', paymentMethod: 'Coleta' },
-    { id: 'DOA007', donorName: 'Ana Beatriz', donorCode: 'DON002', amount: 600.00, paymentDate: getDateString(today), dueDate: getDateString(today), status: 'Pago', assessor: 'Ana Beatriz', messenger: 'Gabi Lima', paymentMethod: 'Dinheiro' },
-];
-
 const monthlyResults: MonthlyResult[] = [
     { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', baseAmount: 10000, newClientsResult: 8, status: 'Paga', paymentDate: '2024-08-05' },
     { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor', baseAmount: 12500, newClientsResult: 13, status: 'Pendente', paymentDate: undefined },
@@ -228,4 +218,4 @@ export const commissionsData: Commission[] = calculateCommissions(monthlyResults
 // Helper arrays for dialogs
 export const advisorNames = advisorsData.map(a => a.name).filter(name => name !== 'Direto');
 export const messengerNames = messengersData.map(m => m.name);
-export const donorOptions = donorsData.map(d => ({ id: d.code, name: d.name, code: d.code }));
+// export const donorOptions = donorsData.map(d => ({ id: d.code, name: d.name, code: d.code }));

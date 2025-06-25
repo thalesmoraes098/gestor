@@ -35,7 +35,6 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { advisorNames, messengerNames } from '@/lib/mock-data';
 
 const filterSchema = z.object({
   status: z.enum(['todos', 'pago', 'pendente', 'atrasado', 'cancelado']).default('todos'),
@@ -55,14 +54,20 @@ const defaultValues: FilterFormValues = {
   messenger: '',
 };
 
+type CollaboratorOption = { name: string };
+
 export function DonationsFilterDialog({
   open,
   onOpenChange,
   onApply,
+  advisors,
+  messengers,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApply: (filters: FilterFormValues) => void;
+  advisors: CollaboratorOption[];
+  messengers: CollaboratorOption[];
 }) {
   const form = useForm<FilterFormValues>({
     resolver: zodResolver(filterSchema),
@@ -126,7 +131,7 @@ export function DonationsFilterDialog({
                         </FormControl>
                         <SelectContent>
                             <SelectItem value="todos">Todos Assessores</SelectItem>
-                            {advisorNames.map((assessor) => (<SelectItem key={assessor} value={assessor}>{assessor}</SelectItem>))}
+                            {advisors.map((assessor) => (<SelectItem key={assessor.name} value={assessor.name}>{assessor.name}</SelectItem>))}
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -145,7 +150,7 @@ export function DonationsFilterDialog({
                         </FormControl>
                         <SelectContent>
                             <SelectItem value="todos">Todos Mensageiros</SelectItem>
-                            {messengerNames.map((messenger) => (<SelectItem key={messenger} value={messenger}>{messenger}</SelectItem>))}
+                            {messengers.map((messenger) => (<SelectItem key={messenger.name} value={messenger.name}>{messenger.name}</SelectItem>))}
                         </SelectContent>
                         </Select>
                         <FormMessage />

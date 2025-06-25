@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonationsTable } from "@/components/donations-table";
@@ -8,28 +8,84 @@ import { DonationsFilterDialog, type FilterFormValues } from "@/components/donat
 import { AddDonationDialog } from "@/components/add-donation-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 import type { Donation } from "@/lib/mock-data";
-import { donationsData } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+type DonorOption = { id: string; name: string; code: string };
+type CollaboratorOption = { name: string };
 
 export default function DoacoesPage() {
   const { toast } = useToast();
-  const [donations, setDonations] = useState<Donation[]>(donationsData);
-  const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [advisors, setAdvisors] = useState<CollaboratorOption[]>([]);
+  const [messengers, setMessengers] = useState<CollaboratorOption[]>([]);
+  const [donors, setDonors] = useState<DonorOption[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
   const [donationToEdit, setDonationToEdit] = useState<Donation | null>(null);
 
+  useEffect(() => {
+    setLoading(true);
+
+    const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
+        const data: Donation[] = [];
+        snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() } as Donation));
+        setDonations(data);
+        setLoading(false);
+    });
+
+    const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
+        const data: CollaboratorOption[] = [];
+        snapshot.forEach((doc) => {
+            if (doc.data().status === 'Ativo') {
+                data.push({ name: doc.data().name });
+            }
+        });
+        setAdvisors(data);
+    });
+
+    const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
+        const data: CollaboratorOption[] = [];
+        snapshot.forEach((doc) => {
+            if (doc.data().status === 'Ativo') {
+                data.push({ name: doc.data().name });
+            }
+        });
+        setMessengers(data);
+    });
+
+    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
+        const data: DonorOption[] = [];
+        snapshot.forEach((doc) => {
+            const donorData = doc.data();
+            data.push({ id: doc.id, name: donorData.name, code: donorData.code });
+        });
+        setDonors(data);
+    });
+
+    return () => {
+        unsubDonations();
+        unsubAdvisors();
+        unsubMessengers();
+        unsubDonors();
+    };
+  }, []);
+
   const filteredDonations = useMemo(() => {
+    if (loading) return [];
     return donations.filter(donation => {
       let matches = true;
       if (filters.status && filters.status !== 'todos') {
         matches = matches && donation.status.toLowerCase() === filters.status;
       }
-      if (filters.assessor && filters.assessor !== 'todos') {
+      if (filters.assessor && filters.assessor !== 'todos' && donation.assessor) {
         matches = matches && donation.assessor === filters.assessor;
       }
-      if (filters.messenger && filters.messenger !== 'todos') {
+      if (filters.messenger && filters.messenger !== 'todos' && donation.messenger) {
         matches = matches && donation.messenger === filters.messenger;
       }
       if (filters.startDate) {
@@ -48,7 +104,7 @@ export default function DoacoesPage() {
       }
       return matches;
     });
-  }, [donations, filters]);
+  }, [donations, filters, loading]);
 
   const handleApplyFilters = (newFilters: FilterFormValues) => {
     setFilters(newFilters);
@@ -64,27 +120,48 @@ export default function DoacoesPage() {
     setIsDonationDialogOpen(true);
   };
 
-  const handleDelete = (donationId: string) => {
+  const handleDelete = async (donationId: string) => {
     if (window.confirm('Tem certeza de que deseja excluir esta doação?')) {
-      setDonations(prev => prev.filter(d => d.id !== donationId));
-      toast({
-        title: 'Doação Excluída',
-        description: 'A doação foi removida com sucesso.',
-      });
+        try {
+            await deleteDoc(doc(db, "donations", donationId));
+            toast({
+                title: 'Doação Excluída',
+                description: 'A doação foi removida com sucesso.',
+            });
+        } catch (error) {
+            console.error("Error deleting donation: ", error);
+            toast({
+              variant: "destructive",
+              title: 'Erro ao Excluir',
+              description: 'Não foi possível excluir a doação.',
+            });
+        }
     }
   };
   
-  const handleSave = (data: Omit<Donation, 'id'> & { id?: string }) => {
-    const isEditing = !!data.id;
-    if (isEditing) {
-      setDonations(prev => prev.map(d => d.id === data.id ? { ...d, ...data } as Donation : d));
-      toast({ title: 'Doação Atualizada', description: 'Os dados da doação foram atualizados.' });
-    } else {
-      const newDonation: Donation = { ...data, id: `DOA${String(donations.length + 1).padStart(3, '0')}` } as Donation;
-      setDonations(prev => [...prev, newDonation]);
-      toast({ title: 'Doação Adicionada', description: 'A nova doação foi registrada com sucesso.' });
-    }
+  const handleSave = async (data: any) => {
     setIsDonationDialogOpen(false);
+    const isEditing = !!data.id;
+
+    try {
+        if (isEditing) {
+            const donationId = data.id!;
+            const { id, ...dataToUpdate } = data;
+            await updateDoc(doc(db, "donations", donationId), dataToUpdate);
+            toast({ title: 'Doação Atualizada', description: 'Os dados da doação foram atualizados.' });
+        } else {
+            const { id, ...dataToCreate } = data;
+            await addDoc(collection(db, "donations"), dataToCreate);
+            toast({ title: 'Doação Adicionada', description: 'A nova doação foi registrada com sucesso.' });
+        }
+    } catch (error) {
+        console.error("Error saving donation: ", error);
+        toast({
+            variant: "destructive",
+            title: 'Erro ao Salvar',
+            description: 'Não foi possível salvar os dados da doação.',
+        });
+    }
   };
 
   const handleDialogChange = (open: boolean) => {
@@ -96,8 +173,16 @@ export default function DoacoesPage() {
 
   return (
     <>
-      <DonationsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleApplyFilters} />
-      <AddDonationDialog open={isDonationDialogOpen} onOpenChange={handleDialogChange} donation={donationToEdit} onSave={handleSave} />
+      <DonationsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleApplyFilters} advisors={advisors} messengers={messengers} />
+      <AddDonationDialog 
+        open={isDonationDialogOpen} 
+        onOpenChange={handleDialogChange} 
+        donation={donationToEdit} 
+        onSave={handleSave}
+        donors={donors}
+        advisors={advisors}
+        messengers={messengers}
+      />
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
@@ -118,7 +203,13 @@ export default function DoacoesPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-            <DonationsTable data={filteredDonations} onEdit={handleEdit} onDelete={handleDelete} />
+             {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-muted-foreground">Carregando doações...</p>
+              </div>
+            ) : (
+              <DonationsTable data={filteredDonations} onEdit={handleEdit} onDelete={handleDelete} />
+            )}
           </CardContent>
         </Card>
       </div>

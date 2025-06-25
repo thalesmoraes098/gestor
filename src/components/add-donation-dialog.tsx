@@ -17,8 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
-import { advisorNames, messengerNames, donorOptions, type Donation } from '@/lib/mock-data';
-
+import type { Donation } from '@/lib/mock-data';
 
 const addDonationSchema = z.object({
   donorId: z.string().min(1, { message: 'Selecione um doador.' }),
@@ -43,16 +42,25 @@ const defaultFormValues: Omit<AddDonationFormValues, 'dueDate'> & { dueDate?: Da
   messenger: '',
 };
 
+type DonorOption = { id: string; name: string; code: string };
+type CollaboratorOption = { name: string };
+
 export function AddDonationDialog({ 
     open, 
     onOpenChange, 
     donation,
     onSave,
+    advisors,
+    messengers,
+    donors
 }: { 
     open: boolean; 
     onOpenChange: (open: boolean) => void; 
     donation?: Donation | null; 
-    onSave: (data: Omit<Donation, 'id'> & { id?: string }) => void;
+    onSave: (data: any) => void;
+    advisors: CollaboratorOption[];
+    messengers: CollaboratorOption[];
+    donors: DonorOption[];
 }) {
   const isEditMode = !!donation;
   const [isDonorPopoverOpen, setIsDonorPopoverOpen] = useState(false);
@@ -65,9 +73,9 @@ export function AddDonationDialog({
   useEffect(() => {
     if (open) {
       if (isEditMode && donation) {
-        const donor = donorOptions.find(d => d.id === donation.donorCode);
+        const currentDonor = donors.find(d => d.code === donation.donorCode);
         form.reset({
-          donorId: donor?.id || '',
+          donorId: currentDonor?.id || '',
           amount: donation.amount || 0,
           dueDate: donation.dueDate ? new Date(donation.dueDate) : new Date(),
           paymentDate: donation.paymentDate ? new Date(donation.paymentDate) : undefined,
@@ -80,16 +88,16 @@ export function AddDonationDialog({
         form.reset({ ...defaultFormValues, dueDate: new Date() });
       }
     }
-  }, [open, donation, isEditMode, form]);
+  }, [open, donation, isEditMode, form, donors]);
 
   const onSubmit = (data: AddDonationFormValues) => {
-    const donor = donorOptions.find(d => d.id === data.donorId);
+    const donor = donors.find(d => d.id === data.donorId);
     if (!donor) return;
 
     const submissionData = {
         ...data,
         donorName: donor.name,
-        donorCode: donor.id,
+        donorCode: donor.code,
         dueDate: format(data.dueDate, 'yyyy-MM-dd'),
         paymentDate: data.paymentDate ? format(data.paymentDate, 'yyyy-MM-dd') : '',
     };
@@ -131,7 +139,7 @@ export function AddDonationDialog({
                               )}
                             >
                               {field.value
-                                ? donorOptions.find(
+                                ? donors.find(
                                     (donor) => donor.id === field.value
                                   )?.name
                                 : "Selecione o doador"}
@@ -145,9 +153,9 @@ export function AddDonationDialog({
                             <CommandList>
                               <CommandEmpty>Nenhum doador encontrado.</CommandEmpty>
                               <CommandGroup>
-                                {donorOptions.map((donor) => (
+                                {donors.map((donor) => (
                                   <CommandItem
-                                    value={`${donor.name} ${donor.id}`}
+                                    value={`${donor.name} ${donor.code}`}
                                     key={donor.id}
                                     onSelect={() => {
                                       form.setValue("donorId", donor.id)
@@ -162,7 +170,7 @@ export function AddDonationDialog({
                                           : "opacity-0"
                                       )}
                                     />
-                                    {donor.name} ({donor.id})
+                                    {donor.name} ({donor.code})
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
@@ -223,10 +231,10 @@ export function AddDonationDialog({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="assessor" render={({ field }) => (
-                        <FormItem><FormLabel>Assessor</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{advisorNames.map((assessor) => (<SelectItem key={assessor} value={assessor}>{assessor}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Assessor</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{advisors.map((assessor) => (<SelectItem key={assessor.name} value={assessor.name}>{assessor.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="messenger" render={({ field }) => (
-                        <FormItem><FormLabel>Mensageiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{messengerNames.map((messenger) => (<SelectItem key={messenger} value={messenger}>{messenger}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Mensageiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione (Opcional)" /></SelectTrigger></FormControl><SelectContent>{messengers.map((messenger) => (<SelectItem key={messenger.name} value={messenger.name}>{messenger.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )}/>
                 </div>
               </div>

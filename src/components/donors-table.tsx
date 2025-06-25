@@ -67,6 +67,17 @@ const formatDate = (dateString?: string) => {
   });
 };
 
+const escapeCsvCell = (cell: any): string => {
+    const strCell = String(cell === null || cell === undefined ? '' : cell);
+    // If the cell contains a comma, double quotes, or a newline, wrap it in double quotes.
+    if (/[",\n]/.test(strCell)) {
+        // Also, escape any existing double quotes by doubling them.
+        return `"${strCell.replace(/"/g, '""')}"`;
+    }
+    return strCell;
+};
+
+
 export function DonorsTable({ 
     data, 
     onEdit, 
@@ -126,11 +137,11 @@ export function DonorsTable({
         const headers = ['DataVencimento', 'Status', 'Valor', 'Assessor', 'Mensageiro'];
         const rows = donationHistory.map(d => 
             [
-                formatDate(d.dueDate),
-                d.status,
-                d.amount.toFixed(2).replace('.',','),
-                `"${d.assessor || ''}"`,
-                `"${d.messenger || ''}"`,
+                escapeCsvCell(formatDate(d.dueDate)),
+                escapeCsvCell(d.status),
+                escapeCsvCell(d.amount.toFixed(2).replace('.',',')),
+                escapeCsvCell(d.assessor),
+                escapeCsvCell(d.messenger),
             ].join(',')
         );
 

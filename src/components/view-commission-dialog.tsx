@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from "@/lib/utils";
 
 const viewCommissionSchema = z.object({
@@ -78,105 +79,111 @@ export function ViewCommissionDialog({ open, onOpenChange, commission }: { open:
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4 text-sm">
-          <div className="grid grid-cols-2 gap-2">
-            <span className="text-muted-foreground">Beneficiário:</span>
-            <span className="font-semibold text-right">{commission.recipientName} ({commission.recipientType})</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <span className="text-muted-foreground">Mês de Referência:</span>
-            <span className="font-semibold text-right">{commission.referenceMonth}</span>
-          </div>
-          
-           {isAssessor ? (
-            <>
-                <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
-                    <span className="text-muted-foreground">Meta (Arrecadação):</span>
-                    <span className="font-semibold text-right">{formatCurrency(commission.goal)}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <span className="text-muted-foreground">Resultado (Arrecadação):</span>
-                     <span className={`font-semibold text-right`}>
-                        {formatCurrency(commission.baseAmount)}
-                    </span>
-                </div>
-                 <div className="grid grid-cols-2 gap-2">
-                    <span className="text-muted-foreground">Meta (Novos Clientes):</span>
-                    <span className="font-semibold text-right">{commission.newClientsGoal}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <span className="text-muted-foreground">Resultado (Novos Clientes):</span>
-                    <span className="font-semibold text-right">{commission.newClientsResult}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <span className="text-muted-foreground">Comissão (Min/Máx):</span>
-                    <span className="font-semibold text-right">{commission.minCommissionPercentage}% / {commission.maxCommissionPercentage}%</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <span className="text-muted-foreground">Taxa Aplicada:</span>
-                    <span className="font-semibold text-right flex items-center justify-end gap-2">
-                        {commission.commissionRate.toFixed(1)}%
-                        <Badge variant={goalMet ? 'default' : 'destructive'}>{goalMet ? 'Máxima' : 'Mínima'}</Badge>
-                    </span>
-                </div>
-            </>
-           ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <span className="text-muted-foreground">Valor Base:</span>
-              <span className="font-semibold text-right">{formatCurrency(commission.baseAmount)}</span>
-            </div>
-           )}
-
-          <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
-            <span className="text-muted-foreground">Valor da Comissão:</span>
-            <span className="font-semibold text-right">{formatCurrency(commission.commissionAmount)}</span>
-          </div>
-        </div>
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-             <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        <SelectItem value="Pendente">Pendente</SelectItem>
-                        <SelectItem value="Paga">Paga</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-            />
-            {isPaid && (
-                <FormField
-                    control={form.control}
-                    name="paymentDate"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                            <FormLabel>Data de Pagamento</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10", !field.value && "text-muted-foreground")}>
-                                            {field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Selecione a data</span>)}
-                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              <div className="space-y-4 p-1">
+                <div className="grid gap-4 py-4 text-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Beneficiário:</span>
+                    <span className="font-semibold text-right">{commission.recipientName} ({commission.recipientType})</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Mês de Referência:</span>
+                    <span className="font-semibold text-right">{commission.referenceMonth}</span>
+                  </div>
+                  
+                  {isAssessor ? (
+                    <>
+                        <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
+                            <span className="text-muted-foreground">Meta (Arrecadação):</span>
+                            <span className="font-semibold text-right">{formatCurrency(commission.goal)}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <span className="text-muted-foreground">Resultado (Arrecadação):</span>
+                            <span className={`font-semibold text-right`}>
+                                {formatCurrency(commission.baseAmount)}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <span className="text-muted-foreground">Meta (Novos Clientes):</span>
+                            <span className="font-semibold text-right">{commission.newClientsGoal}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <span className="text-muted-foreground">Resultado (Novos Clientes):</span>
+                            <span className="font-semibold text-right">{commission.newClientsResult}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <span className="text-muted-foreground">Comissão (Min/Máx):</span>
+                            <span className="font-semibold text-right">{commission.minCommissionPercentage}% / {commission.maxCommissionPercentage}%</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <span className="text-muted-foreground">Taxa Aplicada:</span>
+                            <span className="font-semibold text-right flex items-center justify-end gap-2">
+                                {commission.commissionRate.toFixed(1)}%
+                                <Badge variant={goalMet ? 'default' : 'destructive'}>{goalMet ? 'Máxima' : 'Mínima'}</Badge>
+                            </span>
+                        </div>
+                    </>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
+                      <span className="text-muted-foreground">Valor Base:</span>
+                      <span className="font-semibold text-right">{formatCurrency(commission.baseAmount)}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
+                    <span className="text-muted-foreground">Valor da Comissão:</span>
+                    <span className="font-semibold text-right">{formatCurrency(commission.commissionAmount)}</span>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 pt-4">
+                  <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              <SelectItem value="Pendente">Pendente</SelectItem>
+                              <SelectItem value="Paga">Paga</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
                         </FormItem>
-                    )}
-                />
-            )}
+                      )}
+                  />
+                  {isPaid && (
+                      <FormField
+                          control={form.control}
+                          name="paymentDate"
+                          render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                  <FormLabel>Data de Pagamento</FormLabel>
+                                  <Popover>
+                                      <PopoverTrigger asChild>
+                                          <FormControl>
+                                              <Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10", !field.value && "text-muted-foreground")}>
+                                                  {field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Selecione a data</span>)}
+                                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                              </Button>
+                                          </FormControl>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0" align="start">
+                                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                                      </PopoverContent>
+                                  </Popover>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                  )}
+                </div>
+              </div>
+            </ScrollArea>
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={handleCancel}>Cancelar</Button>
               <Button type="submit">Salvar</Button>

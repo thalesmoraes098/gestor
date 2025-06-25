@@ -16,7 +16,7 @@ import { getLoggedInUser, setLoggedInUser, type User } from '@/lib/session';
 const profileSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
-  photoUrl: z.string().url({ message: 'Por favor, insira uma URL de imagem válida.' }).optional().or(z.literal('')),
+  photoUrl: z.string().optional().or(z.literal('')),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -80,25 +80,41 @@ export default function PerfilPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="flex items-center gap-6">
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src={photoUrl || 'https://placehold.co/80x80.png'} alt={user?.name || 'User'} data-ai-hint="person" />
-                        <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
-                    </Avatar>
-                    <FormField
-                        control={form.control}
-                        name="photoUrl"
-                        render={({ field }) => (
-                        <FormItem className="flex-1">
-                            <FormLabel>URL da Foto</FormLabel>
-                            <FormControl>
-                                <Input placeholder="https://example.com/sua-foto.png" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-              </div>
+                <FormField
+                    control={form.control}
+                    name="photoUrl"
+                    render={({ field }) => (
+                    <FormItem>
+                        <div className="flex items-center gap-6">
+                            <Avatar className="h-20 w-20">
+                                <AvatarImage src={field.value || 'https://placehold.co/80x80.png'} alt={user?.name || 'User'} data-ai-hint="person" />
+                                <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 space-y-2">
+                                <FormLabel>Foto de Perfil</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        onChange={(e) => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            const file = e.target.files[0];
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                            field.onChange(reader.result as string);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                        }}
+                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </div>
+                        </div>
+                    </FormItem>
+                    )}
+                />
 
               <FormField
                 control={form.control}

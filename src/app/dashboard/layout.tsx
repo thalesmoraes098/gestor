@@ -18,7 +18,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -54,8 +53,6 @@ export default function DashboardLayout({
     { href: '/dashboard/comissoes', label: 'Comissões', icon: Percent },
     { href: '/dashboard/relatorios', label: 'Relatórios', icon: BarChart },
   ];
-
-  const settingsMenuItem = { href: '/dashboard/configuracoes', label: 'Configurações', icon: Settings };
   
   const handleLogout = () => {
     setLoggedInUser(null);
@@ -88,24 +85,7 @@ export default function DashboardLayout({
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-             {user?.role === 'Admin' && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === settingsMenuItem.href}
-                    tooltip={settingsMenuItem.label}
-                  >
-                    <Link href={settingsMenuItem.href}>
-                      <settingsMenuItem.icon />
-                      <span>{settingsMenuItem.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-             )}
-          </SidebarMenu>
-        </SidebarFooter>
+        <SidebarFooter />
       </Sidebar>
       <SidebarInset>
         <header className="flex h-14 items-center justify-between gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
@@ -129,6 +109,14 @@ export default function DashboardLayout({
                         <span>Meu Perfil</span>
                     </Link>
                 </DropdownMenuItem>
+                {user?.role === 'Admin' && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard/configuracoes">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Configurações</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={handleLogout}>
                   Sair

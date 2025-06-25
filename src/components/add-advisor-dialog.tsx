@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const addAdvisorSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
-  photoUrl: z.string().url({ message: "Por favor, insira uma URL válida." }).optional().or(z.literal('')),
+  photoUrl: z.string().optional().or(z.literal('')),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
   goal: z.coerce.number().min(0, { message: 'A meta não pode ser negativa.' }),
@@ -106,18 +106,43 @@ export function AddAdvisorDialog({
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <ScrollArea className="h-[60vh]">
               <div className="grid gap-6 py-4 px-2 pr-6">
+                <FormField
+                  control={form.control}
+                  name="photoUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                        <div className="flex items-center gap-4">
+                            <img src={field.value || 'https://placehold.co/64x64.png'} alt="Foto do assessor" className="w-16 h-16 rounded-full object-cover"/>
+                            <div className="flex-1 space-y-2">
+                                <FormLabel>Foto do Assessor</FormLabel>
+                                <FormControl>
+                                    <Input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                const file = e.target.files[0];
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    field.onChange(reader.result as string);
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </div>
+                        </div>
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl><Input placeholder="Nome completo do assessor" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
-
-                <FormField control={form.control} name="photoUrl" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL da Foto</FormLabel>
-                    <FormControl><Input placeholder="https://example.com/foto.png" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}/>

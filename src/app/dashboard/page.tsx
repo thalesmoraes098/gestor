@@ -14,7 +14,7 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {kpiData.map((kpi) => (
-                <Card key={kpi.title} className="rounded-2xl border-0 shadow-sm transition-all hover:shadow-md">
+                <Card key={kpi.title} className="rounded-2xl border-0 shadow-lg">
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                         <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
                         <kpi.icon className="w-5 h-5 text-muted-foreground" />
@@ -28,7 +28,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-            <Card className="lg:col-span-3 rounded-2xl border-0 shadow-sm">
+            <Card className="lg:col-span-3 rounded-2xl border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle>Visão Geral das Doações</CardTitle>
                 </CardHeader>
@@ -36,7 +36,7 @@ export default function DashboardPage() {
                     <CommissionTrendChart data={[]} />
                 </CardContent>
             </Card>
-            <Card className="lg:col-span-2 rounded-2xl border-0 shadow-sm">
+            <Card className="lg:col-span-2 rounded-2xl border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle>Doações por Assessor</CardTitle>
                 </CardHeader>

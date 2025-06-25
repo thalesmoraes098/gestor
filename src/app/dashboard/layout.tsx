@@ -10,7 +10,6 @@ import {
   HandHeart,
   LayoutDashboard,
   Percent,
-  Plus,
   Settings,
   Users,
 } from 'lucide-react';
@@ -55,9 +54,8 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <Button variant="default" className="w-full">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Registro
+          <Button variant="default" className="w-full font-bold" disabled>
+            JUVENÓPOLIS
           </Button>
         </SidebarHeader>
         <SidebarContent>

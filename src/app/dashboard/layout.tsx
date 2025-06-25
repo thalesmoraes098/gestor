@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
   Bell,
-  LayoutDashboard,
+  LayoutGrid,
   Users,
   HandHeart,
   Briefcase,
@@ -9,12 +9,6 @@ import {
   Percent,
   BarChart,
   Settings,
-  Plus,
-  Trash2,
-  Palette,
-  Sparkles,
-  AppWindow,
-  Folder,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -71,49 +65,11 @@ export default function DashboardLayout({
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu className="px-4">
-             <SidebarMenuItem>
-                <Button className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Criar
-                </Button>
-            </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive>
                 <Link href="/dashboard">
-                  <LayoutDashboard />
-                  Dashboard
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <Folder />
-                  Projetos
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <Palette />
-                  Modelos
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <Sparkles />
-                  Canva IA
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="#">
-                  <AppWindow />
-                  Apps
+                  <LayoutGrid />
+                  Painel
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -180,14 +136,6 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuButton>
              </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="#">
-                      <Trash2 />
-                      Lixeira
-                  </Link>
-                </SidebarMenuButton>
-             </SidebarMenuItem>
              <SidebarSeparator />
              <SidebarMenuItem>
                  <DropdownMenu>
@@ -225,7 +173,7 @@ export default function DashboardLayout({
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                     <Bell className="h-4 w-4" />
                     <span className="sr-only">Notificações</span>
-                  </Button>
+                  </button>
                 </div>
             </header>
             <main className="flex-1 p-4 sm:p-6">{children}</main>

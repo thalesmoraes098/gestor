@@ -1,6 +1,10 @@
+'use client';
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonorsTable } from "@/components/donors-table";
+import { DonorsFilterDialog } from "@/components/donors-filter-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 
 const donorsData = [
@@ -32,30 +36,35 @@ const donorsData = [
 ];
 
 export default function DoadoresPage() {
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Doadores</h1>
-          <p className="text-muted-foreground">Gerencie os doadores da sua organização.</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" className="h-12 rounded-lg text-base">
-            <Filter className="mr-2 h-5 w-5" />
-            Filtros
-          </Button>
-          <Button className="h-12 rounded-lg font-semibold text-base">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Adicionar Doador
-          </Button>
-        </div>
-      </div>
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-      <Card className="rounded-2xl border-0 shadow-lg">
-        <CardContent className="p-0">
-          <DonorsTable data={donorsData} />
-        </CardContent>
-      </Card>
-    </div>
+  return (
+    <>
+      <DonorsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} />
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Doadores</h1>
+            <p className="text-muted-foreground">Gerencie os doadores da sua organização.</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" className="h-12 rounded-lg text-base" onClick={() => setIsFilterOpen(true)}>
+              <Filter className="mr-2 h-5 w-5" />
+              Filtros
+            </Button>
+            <Button className="h-12 rounded-lg font-semibold text-base">
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Adicionar Doador
+            </Button>
+          </div>
+        </div>
+
+        <Card className="rounded-2xl border-0 shadow-lg">
+          <CardContent className="p-0">
+            <DonorsTable data={donorsData} />
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

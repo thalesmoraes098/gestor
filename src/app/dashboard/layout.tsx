@@ -48,13 +48,11 @@ export default function DashboardLayout({
 
   const settingsMenuItem = { href: '/dashboard/configuracoes', label: 'Configurações', icon: Settings };
 
-  const allNavigationItems = [...menuItems, settingsMenuItem];
-
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <Button variant="default" className="w-full font-bold" disabled>
+          <Button variant="ghost" className="w-full justify-center text-lg font-bold text-primary bg-primary/10 hover:bg-primary/20">
             JUVENÓPOLIS
           </Button>
         </SidebarHeader>
@@ -105,11 +103,6 @@ export default function DashboardLayout({
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm md:px-6">
             <SidebarTrigger className="flex md:hidden"/>
-            <div className='flex-1'>
-                 <h1 className="text-lg font-semibold md:text-xl">
-                    {allNavigationItems.find(item => item.href === pathname)?.label ?? 'Dashboard'}
-                </h1>
-            </div>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>

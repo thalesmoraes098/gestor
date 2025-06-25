@@ -81,19 +81,15 @@ Você precisa das chaves de configuração para que seu aplicativo Next.js possa
 
 ### 4. Configure as Variáveis de Ambiente (Secrets)
 
-Esta é a etapa final e mais importante. Você precisa fornecer suas credenciais do Firebase de forma segura para a sua aplicação. Faremos isso criando "Secrets".
+Esta é a etapa mais importante. Você precisa fornecer suas credenciais do Firebase de forma segura para a sua aplicação.
 
-1.  **Acesse a Página do seu Back-end:**
-    *   No Console do Firebase, vá para **Build > App Hosting**.
-    *   Clique no card do seu back-end (chamado **gestor**).
+1.  **Acesse o Secret Manager:**
+    *   Vá para a página do [Secret Manager no Google Cloud Console](https://console.cloud.google.com/security/secret-manager).
+    *   Certifique-se de que o projeto correto está selecionado no topo da página.
 
-2.  **Vá para a Seção de Secrets:**
-    *   Na página de detalhes do back-end, clique na aba **Configurações**.
-    *   No menu à esquerda, clique em **Ambiente**.
-
-3.  **Crie os Secrets Manualmente:**
-    *   Você verá um botão **"Adicionar secret"**. Clique nele.
-    *   Um pop-up aparecerá pedindo um **Nome** e um **Valor** para o secret.
+2.  **Crie os Secrets Manualmente:**
+    *   Clique em **"Criar secret"** no topo da página.
+    *   Um formulário aparecerá pedindo um **Nome** e um **Valor** para o secret.
     *   Agora, crie os 6 secrets um por um, usando a tabela abaixo como referência. Copie o **Nome do Secret** exatamente como está na tabela e cole o **Valor** correspondente do seu objeto `firebaseConfig`.
 
     **Tabela de Secrets:**
@@ -110,11 +106,30 @@ Esta é a etapa final e mais importante. Você precisa fornecer suas credenciais
     *   **Exemplo para o primeiro secret:**
         *   Nome do Secret: `FIREBASE_API_KEY`
         *   Valor do Secret: `AIza...` (cole sua chave aqui)
-        *   Clique em "Salvar".
+        *   Deixe as outras opções como estão e clique em **"Criar secret"**.
 
-    *   Repita o processo clicando em "Adicionar secret" novamente para os outros 5 itens da tabela.
+    *   Repita o processo para os outros 5 itens da tabela.
 
-4.  **Verifique a Lista:**
-    *   Após salvar todos os 6, você verá a lista completa de secrets na tela.
+### 5. Conceda Permissão de Acesso aos Secrets (Passo Crucial)
 
-Com isso, sua aplicação estará 100% configurada e pronta para ser publicada. O arquivo `apphosting.yaml` no seu código já está preparado para usar esses secrets que você acabou de criar.
+Depois de criar os secrets, você precisa dar permissão para que o seu back-end do App Hosting possa acessá-los. Este é um passo de segurança essencial.
+
+1.  **Encontre o Service Account do App Hosting:**
+    *   Para dar a permissão, você precisa do nome do "principal" (o serviço que precisa do acesso). O App Hosting usa um Service Account específico.
+    *   O nome dele segue este formato: `service-SEU_NUMERO_DO_PROJETO@gcp-sa-apphosting.iam.gserviceaccount.com`
+    *   Para encontrar o `SEU_NUMERO_DO_PROJETO`:
+        *   Vá para a [Página inicial do Google Cloud Console](https://console.cloud.google.com/home/dashboard).
+        *   No card "Informações do projeto", você verá o **Número do projeto**. Copie esse número.
+
+2.  **Conceda a Permissão para Cada Secret:**
+    *   Você precisa repetir este processo para **cada um dos 6 secrets** que criou (`FIREBASE_API_KEY`, etc.).
+    *   Volte para a página do [Secret Manager](https://console.cloud.google.com/security/secret-manager).
+    *   Na lista, marque a caixa de seleção ao lado do primeiro secret (ex: `FIREBASE_API_KEY`).
+    *   No painel de informações que aparece à direita, clique na aba **PERMISSÕES**.
+    *   Clique no botão **CONCEDER ACESSO**.
+    *   No campo **"Novos principais"**, cole o nome completo do Service Account que você encontrou no passo anterior.
+    *   No campo **"Selecionar um papel"**, procure e selecione o papel **"Acessador de secrets do Secret Manager"** (`Secret Manager Secret Accessor`).
+    *   Clique em **Salvar**.
+    *   **Repita esses passos para os outros 5 secrets.**
+
+Após conceder a permissão a todos os secrets, volte para o Console do Firebase, na página do seu back-end do App Hosting, e tente **"Criar lançamento"** novamente. O erro de "Secret configurado incorretamente" não deve mais aparecer.

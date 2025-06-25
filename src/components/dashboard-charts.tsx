@@ -1,0 +1,80 @@
+"use client"
+
+import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend, Cell } from "recharts"
+import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
+
+const chartConfigBar: ChartConfig = {
+  total: {
+    label: "Sales",
+    color: "hsl(var(--chart-1))",
+  },
+}
+
+export function AdvisorSalesChart({ data }: { data: any[] }) {
+  return (
+    <ChartContainer config={chartConfigBar} className="h-[250px] w-full">
+        <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="name"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+          />
+          <YAxis />
+          <Tooltip content={<ChartTooltipContent />} />
+          <Bar dataKey="total" fill="var(--color-total)" radius={4} />
+        </BarChart>
+    </ChartContainer>
+  )
+}
+
+
+const chartConfigLine: ChartConfig = {
+  commission: {
+    label: "Commission",
+    color: "hsl(var(--chart-2))",
+  },
+}
+
+export function CommissionTrendChart({ data }: { data: any[] }) {
+  return (
+    <ChartContainer config={chartConfigLine} className="h-[250px] w-full">
+        <LineChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
+          <YAxis />
+          <Tooltip content={<ChartTooltipContent />} />
+          <Legend />
+          <Line type="monotone" dataKey="commission" stroke="var(--color-commission)" strokeWidth={2} dot={false} />
+        </LineChart>
+    </ChartContainer>
+  )
+}
+
+const chartConfigPie: ChartConfig = {
+  sales: {
+    label: "Sales",
+  },
+}
+
+export function SalesDistributionChart({ data }: { data: any[] }) {
+    return (
+        <ChartContainer config={chartConfigPie} className="h-[250px] w-full">
+            <PieChart>
+                <Tooltip content={<ChartTooltipContent nameKey="name" />} />
+                <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                </Pie>
+                <Legend />
+            </PieChart>
+        </ChartContainer>
+    )
+}

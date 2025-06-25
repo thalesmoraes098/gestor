@@ -13,6 +13,8 @@ import type { Commission, Donation, Advisor, Messenger } from "@/lib/mock-data";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getMonth, getYear } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type Collaborator = {
   id: string;
@@ -224,7 +226,7 @@ export default function ComissoesPage() {
             <CardDescription>{chartDescription}</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex items-center justify-center h-[250px] text-muted-foreground">Carregando dados do gráfico...</div> 
+            {loading ? <Skeleton className="h-[250px] w-full" /> 
             : chartData && chartData.length > 0 ? (
                 <PerformanceReportChart data={chartData} />
             ) : (
@@ -237,7 +239,40 @@ export default function ComissoesPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-             {loading ? <div className="flex items-center justify-center h-64 text-muted-foreground">Carregando comissões...</div> 
+             {loading ? (
+              <div className="p-4">
+                <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead><Skeleton className="h-5 w-[100px]" /></TableHead>
+                          <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
+                          <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
+                          <TableHead className="hidden md:table-cell text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
+                          <TableHead className="hidden md:table-cell text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
+                          <TableHead className="hidden sm:table-cell text-right"><Skeleton className="h-5 w-[60px] ml-auto" /></TableHead>
+                          <TableHead className="text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
+                          <TableHead className="hidden sm:table-cell text-center"><Skeleton className="h-5 w-[80px] mx-auto" /></TableHead>
+                          <TableHead><span className="sr-only">Ações</span></TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {[...Array(5)].map((_, i) => (
+                          <TableRow key={i}>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
+                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
+                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full ml-auto" /></TableCell>
+                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full mx-auto" /></TableCell>
+                              <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+             ) 
              : <CommissionsTable data={filteredCommissions} onEdit={handleView} />}
           </CardContent>
         </Card>

@@ -11,6 +11,8 @@ import type { Donation } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type DonorOption = { id: string; name: string; code: string };
 type CollaboratorOption = { name: string };
@@ -204,8 +206,37 @@ export default function DoacoesPage() {
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
              {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Carregando doações...</p>
+              <div className="p-4">
+                <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead className="w-[120px]"><Skeleton className="h-5 w-full" /></TableHead>
+                          <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
+                          <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
+                          <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
+                          <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
+                          <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
+                          <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
+                          <TableHead className="text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
+                          <TableHead><span className="sr-only">Ações</span></TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {[...Array(5)].map((_, i) => (
+                          <TableRow key={i}>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-full ml-auto" /></TableCell>
+                              <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
               </div>
             ) : (
               <DonationsTable data={filteredDonations} onEdit={handleEdit} onDelete={handleDelete} />

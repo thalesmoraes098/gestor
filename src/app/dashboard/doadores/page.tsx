@@ -11,6 +11,8 @@ import type { Donor, Advisor } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function DoadoresPage() {
   const { toast } = useToast();
@@ -184,8 +186,33 @@ export default function DoadoresPage() {
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-muted-foreground">Carregando doadores...</p>
+              <div className="p-4">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[120px]"><Skeleton className="h-5 w-full" /></TableHead>
+                            <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
+                            <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
+                            <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
+                            <TableHead className="hidden md:table-cell text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
+                            <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
+                            <TableHead><span className="sr-only">Ações</span></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {[...Array(5)].map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+                                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
+                                <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
               </div>
             ) : (
               <DonorsTable data={filteredDonors} onEdit={handleEdit} onDelete={handleDelete} />

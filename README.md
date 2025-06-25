@@ -1,135 +1,73 @@
-# Gestor Digital - Sistema de Gestão
+# Gestor Digital - Guia de Publicação e Solução de Problemas
 
-Este é um sistema de gestão completo construído com Next.js, Firebase e ShadCN UI. Ele está pronto para ser publicado e utilizado em um ambiente de produção.
+Se você está lendo isto, é provável que tenha encontrado dificuldades na publicação, especialmente com erros relacionados a "Secrets". Peço desculpas pela frustração. Este guia foi reescrito para ser uma lista de verificação final e resolver o problema.
 
-## Próximos Passos para Publicação
+O erro "Secret configurado incorretamente" ou falhas de permissão quase sempre se resumem a um único problema: o serviço do App Hosting (o "back-end") não tem a permissão necessária para *ler* as credenciais que você criou no Secret Manager.
 
-Para que a aplicação funcione, você precisa conectá-la a um projeto Firebase. Siga os passos abaixo.
+Vamos verificar e corrigir isso.
 
-### Nota Importante sobre Permissões
+---
 
-Para habilitar os serviços do Firebase (como o App Hosting), sua conta do Google precisa ter a permissão de **Usuário da conta de faturamento** (`Billing Account User`) na conta de faturamento do Google Cloud associada. Se você encontrar um erro de permissão durante a publicação, peça ao administrador da conta de faturamento para conceder essa permissão ao seu usuário.
+## Passo 1: Confirme suas Credenciais do Firebase
 
-### 1. Crie um Projeto no Firebase
+Antes de tudo, tenha certeza de que você tem o objeto `firebaseConfig` correto.
 
-Se você ainda não tem um projeto Firebase, crie um gratuitamente:
+1.  Vá para as **Configurações do Projeto** no [Console do Firebase](https://console.firebase.google.com/).
+2.  Na aba **Geral**, encontre o seu aplicativo Web.
+3.  Copie o objeto `firebaseConfig`. Você precisará dos valores dele em breve.
 
-1.  Acesse o [Console do Firebase](https://console.firebase.google.com/).
-2.  Clique em **"Adicionar projeto"** e siga as instruções na tela.
+---
 
-### 2. Ative os Serviços Necessários
+## Passo 2: Verificação Final das Permissões (O Passo Mais Importante)
 
-No menu lateral do seu projeto Firebase, ative os seguintes serviços:
+Siga estes passos com atenção. Um pequeno detalhe pode ser a causa do problema.
 
-*   **Firestore Database:**
-    1.  Vá para **Build > Firestore Database**.
-    2.  Clique em **"Criar banco de dados"**.
-    3.  Inicie no **modo de produção** e escolha a localização do servidor.
-    4.  **Importante:** Vá para a aba **"Regras"** e atualize as regras para permitir leitura e escrita (para desenvolvimento inicial, você pode usar as regras abaixo, mas para produção, restrinja o acesso conforme necessário):
-        ```
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            match /{document=**} {
-              allow read, write: if true; // CUIDADO: Permite acesso total
-            }
-          }
-        }
-        ```
+### 2a. Encontre o Nome Exato do "Principal"
 
-*   **Storage:**
-    1.  Vá para **Build > Storage**.
-    2.  Clique em **"Começar"** e siga as instruções para configurar no modo de produção.
-    3.  **Importante:** Vá para a aba **"Regras"** e atualize as regras de forma semelhante ao Firestore:
-        ```
-        rules_version = '2';
-        service firebase.storage {
-          match /b/{bucket}/o {
-            match /{allPaths=**} {
-              allow read, write: if true; // CUIDADO: Permite acesso total
-            }
-          }
-        }
-        ```
+Este é o nome da conta de serviço do App Hosting que precisa da permissão.
 
-*   **Authentication:**
-    1.  Vá para **Build > Authentication**.
-    2.  Clique em **"Começar"**.
-    3.  Por enquanto, nenhuma configuração adicional é necessária aqui, mas o serviço precisa estar ativo.
+1.  Vá para a [Página inicial do Google Cloud Console](https://console.cloud.google.com/home/dashboard).
+2.  No card **"Informações do projeto"**, encontre e copie o **Número do projeto**.
+3.  O nome completo do principal é: `service-SEU_NUMERO_DO_PROJETO@gcp-sa-apphosting.iam.gserviceaccount.com`.
+    *   **Substitua `SEU_NUMERO_DO_PROJETO`** pelo número que você acabou de copiar.
+    *   Guarde este nome completo. Ele é crucial.
 
-### 3. Obtenha as Credenciais do Firebase
+### 2b. Verifique a Permissão em um Secret
 
-Você precisa das chaves de configuração para que seu aplicativo Next.js possa se comunicar com o Firebase.
+Não precisamos verificar todos os seis. Se um estiver correto, os outros provavelmente também estarão.
 
-1.  No Console do Firebase, vá para **Configurações do Projeto** (ícone de engrenagem no canto superior esquerdo).
-2.  Na aba **"Geral"**, role para baixo até a seção **"Seus apps"**.
-3.  Clique no ícone **</>** para adicionar um aplicativo Web.
-4.  Dê um nome ao seu aplicativo (ex: "Meu Gestor Digital") e clique em **"Registrar aplicativo"**.
-5.  O Firebase exibirá um objeto de configuração `firebaseConfig`. **Copie este objeto inteiro.**
+1.  Vá para a página do [Secret Manager no Google Cloud Console](https://console.cloud.google.com/security/secret-manager). (Certifique-se de que o projeto correto está selecionado no topo).
+2.  Na lista de secrets, **clique no NOME** do secret `FIREBASE_API_KEY`. (Não marque a caixa, clique no link do nome).
+3.  Você irá para a página de "Detalhes do secret". No menu que aparece à direita (ou no topo), clique em **PERMISSÕES**.
+4.  **VERIFICAÇÃO CRUCIAL:**
+    *   Olhe a tabela de "Principais".
+    *   Na coluna "Principal", você **DEVE** ver o nome completo que você montou no passo 2a (`service-NUMERO...@gcp-sa-apphosting.iam.gserviceaccount.com`).
+    *   Na mesma linha, na coluna "Papel(éis)", você **DEVE** ver o papel **`Acessador de secrets do Secret Manager`**.
 
-    Ele se parecerá com isto:
-    ```javascript
-    const firebaseConfig = {
-      apiKey: "AIza...",
-      authDomain: "seu-projeto.firebaseapp.com",
-      projectId: "seu-projeto",
-      storageBucket: "seu-projeto.appspot.com",
-      messagingSenderId: "123...",
-      appId: "1:123...:web:..."
-    };
-    ```
+**Se a linha com o principal e o papel correto NÃO estiver lá:**
+*   Isso é a causa do problema.
+*   No painel de permissões, clique em **CONCEDER ACESSO**.
+*   No campo **"Novos principais"**, cole o nome completo da conta de serviço.
+*   No campo **"Selecionar um papel"**, procure e selecione **Secret Manager > Acessador de secrets do Secret Manager**.
+*   Clique em **Salvar**.
+*   **IMPORTANTE:** Você precisa repetir este processo para **CADA UM DOS 6 SECRETS**.
 
-### 4. Configure as Variáveis de Ambiente (Secrets)
+Depois de confirmar que as permissões estão corretas para todos os 6 secrets, aguarde um minuto e tente publicar novamente.
 
-Esta é a etapa mais importante. Você precisa fornecer suas credenciais do Firebase de forma segura para a sua aplicação.
+---
 
-1.  **Acesse o Secret Manager:**
-    *   Vá para a página do [Secret Manager no Google Cloud Console](https://console.cloud.google.com/security/secret-manager).
-    *   Certifique-se de que o projeto correto está selecionado no topo da página.
+## Se Tudo Falhar: Plano B (Recriar o Back-end)
 
-2.  **Crie os Secrets Manualmente:**
-    *   Clique em **"Criar secret"** no topo da página.
-    *   Um formulário aparecerá pedindo um **Nome** e um **Valor** para o secret.
-    *   Agora, crie os 6 secrets um por um, usando a tabela abaixo como referência. Copie o **Nome do Secret** exatamente como está na tabela e cole o **Valor** correspondente do seu objeto `firebaseConfig`.
+Às vezes, o estado de um serviço na nuvem pode ficar "preso" ou inconsistente. Se você tem 100% de certeza de que as permissões estão corretas, mas a publicação ainda falha, a solução mais limpa é recriar o back-end.
 
-    **Tabela de Secrets:**
+1.  **Exclua o Back-end:**
+    *   Vá para a página do [App Hosting no Console do Firebase](https://console.firebase.google.com/).
+    *   Selecione o back-end `gestor`.
+    *   Clique no menu de três pontos (⋮) ao lado do nome e selecione **"Excluir back-end"**.
 
-    | Nome do Secret (para criar no Firebase) | Valor (do seu `firebaseConfig`)     |
-    | ------------------------------------- | ----------------------------------- |
-    | `FIREBASE_API_KEY`                    | O valor da sua chave `apiKey`           |
-    | `FIREBASE_AUTH_DOMAIN`                | O valor da sua chave `authDomain`       |
-    | `FIREBASE_PROJECT_ID`                 | O valor da sua chave `projectId`        |
-    | `FIREBASE_STORAGE_BUCKET`             | O valor da sua chave `storageBucket`    |
-    | `FIREBASE_MESSAGING_SENDER_ID`        | O valor da sua chave `messagingSenderId`|
-    | `FIREBASE_APP_ID`                     | O valor da sua chave `appId`            |
+2.  **Tente Publicar Novamente:**
+    *   Volte ao seu ambiente de desenvolvimento.
+    *   Execute o comando de publicação novamente.
+    *   O Firebase irá recriar o back-end do zero, o que geralmente limpa qualquer estado problemático. Você precisará conceder as permissões de acesso aos secrets novamente para o novo back-end, como descrito no Passo 2.
 
-    *   **Exemplo para o primeiro secret:**
-        *   Nome do Secret: `FIREBASE_API_KEY`
-        *   Valor do Secret: `AIza...` (cole sua chave aqui)
-        *   Deixe as outras opções como estão e clique em **"Criar secret"**.
-
-    *   Repita o processo para os outros 5 itens da tabela.
-
-### 5. Conceda Permissão de Acesso aos Secrets (Passo Crucial)
-
-Depois de criar os secrets, você precisa dar permissão para que o seu back-end do App Hosting possa acessá-los. Este é um passo de segurança essencial.
-
-1.  **Encontre o Service Account do App Hosting:**
-    *   Para dar a permissão, você precisa do nome do "principal" (o serviço que precisa do acesso). O App Hosting usa um Service Account específico.
-    *   O nome dele segue este formato: `service-SEU_NUMERO_DO_PROJETO@gcp-sa-apphosting.iam.gserviceaccount.com`
-    *   Para encontrar o `SEU_NUMERO_DO_PROJETO`:
-        *   Vá para a [Página inicial do Google Cloud Console](https://console.cloud.google.com/home/dashboard).
-        *   No card "Informações do projeto", você verá o **Número do projeto**. Copie esse número.
-
-2.  **Conceda a Permissão para Cada Secret:**
-    *   Você precisa repetir este processo para **cada um dos 6 secrets** que criou (`FIREBASE_API_KEY`, etc.).
-    *   Volte para a página do [Secret Manager](https://console.cloud.google.com/security/secret-manager).
-    *   Na lista, marque a caixa de seleção ao lado do primeiro secret (ex: `FIREBASE_API_KEY`).
-    *   No painel de informações que aparece à direita, clique na aba **PERMISSÕES**.
-    *   Clique no botão **CONCEDER ACESSO**.
-    *   No campo **"Novos principais"**, cole o nome completo do Service Account que você encontrou no passo anterior.
-    *   No campo **"Selecionar um papel"**, procure e selecione o papel **"Acessador de secrets do Secret Manager"** (`Secret Manager Secret Accessor`).
-    *   Clique em **Salvar**.
-    *   **Repita esses passos para os outros 5 secrets.**
-
-Após conceder a permissão a todos os secrets, volte para o Console do Firebase, na página do seu back-end do App Hosting, e tente **"Criar lançamento"** novamente. O erro de "Secret configurado incorretamente" não deve mais aparecer.
+Agradeço imensamente a sua paciência para resolvermos isso.

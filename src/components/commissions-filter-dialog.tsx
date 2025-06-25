@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,35 +24,46 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils";
 
+// This type should be passed in as a prop
+type Collaborator = {
+  id: string;
+  name: string;
+  type: 'Assessor' | 'Mensageiro';
+}
+
 const filterSchema = z.object({
-  recipientName: z.string().optional(),
+  collaboratorId: z.string().optional(),
   recipientType: z.enum(['todos', 'assessor', 'mensageiro']).default('todos'),
   status: z.enum(['todos', 'paga', 'pendente']).default('todos'),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
 });
 
-type FilterFormValues = z.infer<typeof filterSchema>;
+export type FilterFormValues = z.infer<typeof filterSchema>;
 
 export function CommissionsFilterDialog({
   open,
   onOpenChange,
   onApply,
+  collaborators
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApply: (data: FilterFormValues) => void;
+  collaborators: Collaborator[];
 }) {
+  const [isCollaboratorPopoverOpen, setIsCollaboratorPopoverOpen] = useState(false);
+
   const form = useForm<FilterFormValues>({
     resolver: zodResolver(filterSchema),
     defaultValues: {
-      recipientName: '',
+      collaboratorId: '',
       recipientType: 'todos',
       status: 'todos',
     },
@@ -63,13 +75,16 @@ export function CommissionsFilterDialog({
   };
 
   const handleClear = () => {
-    form.reset({
-      recipientName: '',
-      recipientType: 'todos',
-      status: 'todos',
+    const clearedFilters = {
+      recipientType: 'todos' as const,
+      status: 'todos' as const,
+      collaboratorId: undefined,
       startDate: undefined,
       endDate: undefined,
-    });
+    }
+    form.reset(clearedFilters);
+    onApply(clearedFilters);
+    onOpenChange(false);
   };
 
   return (
@@ -85,13 +100,36 @@ export function CommissionsFilterDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 py-4">
             <FormField
               control={form.control}
-              name="recipientName"
+              name="collaboratorId"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Beneficiário</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite o nome do assessor ou mensageiro" {...field} />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Colaborador</FormLabel>
+                    <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                    {field.value ? collaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Buscar colaborador..." />
+                                <CommandList>
+                                  <CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                                  <CommandGroup>
+                                    {collaborators.map((c) => (
+                                        <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
+                                            <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
+                                            {c.name} ({c.type})
+                                        </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -135,7 +173,7 @@ export function CommissionsFilterDialog({
             </div>
 
             <div>
-              <FormLabel>Período de Referência</FormLabel>
+              <FormLabel>Período de Referência (Data de Pagamento)</FormLabel>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                 <FormField control={form.control} name="startDate" render={({ field }) => ( <FormItem className="flex flex-col"><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10", !field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Data inicial</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="endDate" render={({ field }) => ( <FormItem className="flex flex-col"><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal h-10", !field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "dd/MM/yyyy")) : (<span>Data final</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CommissionsTable } from "@/components/commissions-table";
-import { CommissionsFilterDialog } from "@/components/commissions-filter-dialog";
+import { CommissionsFilterDialog, type FilterFormValues } from "@/components/commissions-filter-dialog";
 import { ViewCommissionDialog } from "@/components/view-commission-dialog";
 import { PerformanceReportChart } from "@/components/dashboard-charts";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ type Commission = {
   id: string;
   referenceMonth: string;
   recipientName: string;
+  recipientId: string; // Add this to link back to the source
   recipientType: 'Assessor' | 'Mensageiro';
   goal?: number;
   baseAmount: number;
@@ -51,6 +52,11 @@ const monthlyResults = [
     { id: 'COM006', referenceMonth: 'Junho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, baseAmount: 20000, newClientsResult: 10, status: 'Paga' as const, paymentDate: '2024-07-05' },
 ];
 
+const allCollaborators = [
+  ...advisorsData.map(a => ({ id: a.id, name: a.name, type: 'Assessor' as const })),
+  ...messengersData.map(m => ({ id: m.id, name: m.name, type: 'Mensageiro' as const })),
+];
+
 // This function simulates the automatic commission calculation by the system.
 const calculateCommissions = (
     results: typeof monthlyResults,
@@ -61,19 +67,24 @@ const calculateCommissions = (
         let commissionRate = 0;
         let commissionAmount = 0;
         let advisorDetails: (typeof advisorsData)[0] | undefined;
+        let collaboratorId = '';
 
         if (result.recipientType === 'Assessor') {
             advisorDetails = advisors.find(a => a.name === result.recipientName);
             if (advisorDetails) {
+                collaboratorId = advisorDetails.id;
                 const goalMet = result.baseAmount >= advisorDetails.goal;
                 commissionRate = goalMet ? advisorDetails.maxCommissionPercentage : advisorDetails.minCommissionPercentage;
                 commissionAmount = result.baseAmount * (commissionRate / 100);
             }
         } else { // Mensageiro
             const messengerDetails = messengers.find(m => m.name === result.recipientName);
-            if (messengerDetails && messengerDetails.commissionPercentage) {
-                commissionRate = messengerDetails.commissionPercentage;
-                commissionAmount = result.baseAmount * (commissionRate / 100);
+            if (messengerDetails) {
+                collaboratorId = messengerDetails.id;
+                if (messengerDetails.commissionPercentage) {
+                    commissionRate = messengerDetails.commissionPercentage;
+                    commissionAmount = result.baseAmount * (commissionRate / 100);
+                }
             }
         }
         
@@ -81,6 +92,7 @@ const calculateCommissions = (
             id: result.id,
             referenceMonth: result.referenceMonth,
             recipientName: result.recipientName,
+            recipientId: collaboratorId,
             recipientType: result.recipientType,
             goal: advisorDetails?.goal,
             baseAmount: result.baseAmount,
@@ -98,21 +110,71 @@ const calculateCommissions = (
 
 const commissionsData: Commission[] = calculateCommissions(monthlyResults, advisorsData, messengersData);
 
-type FilterFormValues = {
-  recipientName?: string;
-  recipientType?: "todos" | "assessor" | "mensageiro";
-  status?: "todos" | "paga" | "pendente";
-  startDate?: Date;
-  endDate?: Date;
-};
-
 export default function ComissoesPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isCommissionDialogOpen, setIsCommissionDialogOpen] = useState(false);
   const [commissionToView, setCommissionToView] = useState<Commission | null>(null);
-  const [chartData, setChartData] = useState<any[] | null>(null);
-  const [chartTitle, setChartTitle] = useState('');
   const { toast } = useToast();
+
+  const [filters, setFilters] = useState<FilterFormValues>({});
+
+  const { filteredCommissions, chartData, chartTitle, chartDescription } = useMemo(() => {
+    let filteredData = commissionsData;
+    let newChartData: any[] | null = null;
+    let newChartTitle = 'Desempenho Geral vs. Metas';
+    let newChartDescription = 'Resultados de todos os assessores com metas definidas.';
+
+    // Apply filters to table data
+    if (filters.collaboratorId) {
+      filteredData = filteredData.filter(c => c.recipientId === filters.collaboratorId);
+    }
+    if (filters.recipientType && filters.recipientType !== 'todos') {
+      filteredData = filteredData.filter(c => c.recipientType.toLowerCase() === filters.recipientType);
+    }
+    if (filters.status && filters.status !== 'todos') {
+      filteredData = filteredData.filter(c => c.status.toLowerCase() === filters.status);
+    }
+    if (filters.startDate) {
+        const startDate = new Date(filters.startDate.setHours(0, 0, 0, 0));
+        filteredData = filteredData.filter(c => c.paymentDate && new Date(c.paymentDate) >= startDate);
+    }
+    if (filters.endDate) {
+        const endDate = new Date(filters.endDate.setHours(23, 59, 59, 999));
+        filteredData = filteredData.filter(c => c.paymentDate && new Date(c.paymentDate) <= endDate);
+    }
+
+    // Determine chart data and title based on filters
+    if (filters.collaboratorId) {
+      const collaborator = advisorsData.find(a => a.id === filters.collaboratorId);
+      if (collaborator && collaborator.goal > 0) {
+        const totalValue = filteredData.reduce((sum, c) => sum + c.baseAmount, 0);
+        newChartData = [{ name: collaborator.name, Resultado: totalValue, Meta: collaborator.goal }];
+        newChartTitle = `Desempenho vs. Meta de ${collaborator.name}`;
+        newChartDescription = `Resultado do colaborador comparado com a meta.`;
+      } else {
+        const advisorsWithGoals = advisorsData.filter(a => a.goal > 0);
+        newChartData = advisorsWithGoals.map(advisor => {
+            const advisorCommissions = commissionsData.filter(c => c.recipientId === advisor.id);
+            const totalResult = advisorCommissions.reduce((sum, c) => sum + c.baseAmount, 0);
+            return { name: advisor.name, Resultado: totalResult, Meta: advisor.goal };
+        });
+        if (filters.collaboratorId) { // If a collaborator without goal was selected
+            toast({ title: "Gráfico não disponível", description: "O gráfico de desempenho só está disponível para assessores com meta definida. Exibindo desempenho geral." });
+        }
+      }
+    } else {
+      // General performance chart, potentially filtered by date
+      const advisorsWithGoals = advisorsData.filter(a => a.goal > 0);
+      newChartData = advisorsWithGoals.map(advisor => {
+        const advisorCommissions = filteredData.filter(c => c.recipientId === advisor.id);
+        const totalResult = advisorCommissions.reduce((sum, c) => sum + c.baseAmount, 0);
+        return { name: advisor.name, Resultado: totalResult, Meta: advisor.goal };
+      });
+    }
+
+    return { filteredCommissions: filteredData, chartData: newChartData, chartTitle: newChartTitle, chartDescription: newChartDescription };
+  }, [filters, toast]);
+
 
   const handleView = (commission: Commission) => {
     setCommissionToView(commission);
@@ -126,53 +188,13 @@ export default function ComissoesPage() {
       }
   }
 
-  const handleApplyFilters = (filters: FilterFormValues) => {
-    setChartData(null);
-    setChartTitle('');
-
-    if (!filters.recipientName) {
-      toast({ variant: 'destructive', title: "Filtro Incompleto", description: "Por favor, especifique um nome de colaborador para gerar o gráfico de desempenho." });
-      return;
-    }
-    
-    const assessor = advisorsData.find(a => a.name.toLowerCase() === filters.recipientName?.toLowerCase());
-
-    if (!assessor || !assessor.goal || assessor.goal === 0) {
-      toast({ title: "Gráfico não disponível", description: "O gráfico de desempenho só está disponível para assessores com meta definida." });
-      return;
-    }
-    
-    const commissionsInPeriod = commissionsData.filter(c => {
-      const nameMatch = c.recipientName.toLowerCase() === filters.recipientName?.toLowerCase();
-      if (!nameMatch) return false;
-      
-      if (filters.startDate || filters.endDate) {
-          if (!c.paymentDate) return false;
-          const paymentDate = new Date(c.paymentDate);
-          const startDate = filters.startDate ? new Date(filters.startDate.setHours(0, 0, 0, 0)) : null;
-          const endDate = filters.endDate ? new Date(filters.endDate.setHours(23, 59, 59, 999)) : null;
-
-          if (startDate && paymentDate < startDate) return false;
-          if (endDate && paymentDate > endDate) return false;
-      }
-
-      return true;
-    });
-
-    if (commissionsInPeriod.length === 0) {
-      toast({ title: 'Nenhum dado', description: 'Nenhuma comissão encontrada para este colaborador no período selecionado.' });
-      return;
-    }
-    
-    const totalValue = commissionsInPeriod.reduce((sum, c) => sum + c.baseAmount, 0);
-
-    setChartData([{ name: assessor.name, Resultado: totalValue, Meta: assessor.goal }]);
-    setChartTitle(`Desempenho vs. Meta de ${assessor.name}`);
+  const handleApplyFilters = (newFilters: FilterFormValues) => {
+    setFilters(newFilters);
   }
 
   return (
     <>
-      <CommissionsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleApplyFilters} />
+      <CommissionsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleApplyFilters} collaborators={allCollaborators} />
       <ViewCommissionDialog open={isCommissionDialogOpen} onOpenChange={handleDialogChange} commission={commissionToView} />
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
@@ -188,23 +210,25 @@ export default function ComissoesPage() {
           </div>
         </div>
 
-        {chartData && (
-          <Card className="rounded-2xl border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle>{chartTitle}</CardTitle>
-              <CardDescription>
-                Resultado do colaborador comparado com a meta.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PerformanceReportChart data={chartData} />
-            </CardContent>
-          </Card>
-        )}
+        <Card className="rounded-2xl border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>{chartTitle}</CardTitle>
+            <CardDescription>{chartDescription}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartData && chartData.length > 0 ? (
+                <PerformanceReportChart data={chartData} />
+            ) : (
+                <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                    Nenhum dado de desempenho para exibir com os filtros atuais.
+                </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-            <CommissionsTable data={commissionsData} onEdit={handleView} />
+            <CommissionsTable data={filteredCommissions} onEdit={handleView} />
           </CardContent>
         </Card>
       </div>

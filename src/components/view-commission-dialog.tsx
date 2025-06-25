@@ -69,6 +69,14 @@ export function ViewCommissionDialog({
                         </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
+                      <span className="text-muted-foreground">Meta (Novos Clientes):</span>
+                      <span className="font-semibold text-right">{commission.newClientsGoal ?? 'N/A'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <span className="text-muted-foreground">Resultado (Novos Clientes):</span>
+                      <span className="font-semibold text-right">{commission.newClientsResult ?? 'N/A'}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
                         <span className="text-muted-foreground">Comissão (Min/Máx):</span>
                         <span className="font-semibold text-right">{commission.minCommissionPercentage?.toFixed(1)}% / {commission.maxCommissionPercentage?.toFixed(1)}%</span>
                     </div>

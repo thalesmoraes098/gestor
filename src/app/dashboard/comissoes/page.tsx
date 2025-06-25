@@ -9,10 +9,10 @@ import { ViewCommissionDialog } from "@/components/view-commission-dialog";
 import { PerformanceReportChart } from "@/components/dashboard-charts";
 import { useToast } from "@/hooks/use-toast";
 import { Filter } from "lucide-react";
-import type { Commission, Donation, Advisor, Messenger } from "@/lib/mock-data";
-import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
+import type { Commission, Donation, Advisor, Messenger, Donor } from "@/lib/mock-data";
+import { collection, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { getMonth, getYear } from "date-fns";
+import { addMonths, subMonths, setDate } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -37,15 +37,17 @@ export default function ComissoesPage() {
   
   // Firestore data states
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [donors, setDonors] = useState<Donor[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [messengers, setMessengers] = useState<Messenger[]>([]);
   const [commissionPayments, setCommissionPayments] = useState<Record<string, CommissionPayment>>({});
   const [loading, setLoading] = useState(true);
+  const [closingDay, setClosingDay] = useState(5);
 
   useEffect(() => {
     setLoading(true);
     let loadedCount = 0;
-    const totalToLoad = 4;
+    const totalToLoad = 6; // donations, donors, advisors, messengers, payments, settings
     const doneLoading = () => {
       loadedCount++;
       if (loadedCount === totalToLoad) {
@@ -56,6 +58,10 @@ export default function ComissoesPage() {
     const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
       setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
       doneLoading();
+    });
+    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
+        setDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donor)));
+        doneLoading();
     });
     const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
       setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
@@ -73,9 +79,19 @@ export default function ComissoesPage() {
         setCommissionPayments(payments);
         doneLoading();
     });
+    const fetchSettings = async () => {
+        const settingsRef = doc(db, "system_settings", "general");
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+            setClosingDay(parseInt(settingsSnap.data().closingDay || '5', 10));
+        }
+        doneLoading();
+    };
+    fetchSettings();
   
     return () => {
       unsubDonations();
+      unsubDonors();
       unsubAdvisors();
       unsubMessengers();
       unsubPayments();
@@ -88,15 +104,30 @@ export default function ComissoesPage() {
   ], [advisors, messengers]);
 
   const commissionsData: Commission[] = useMemo(() => {
+    if (loading) return [];
     const monthlyResults: { [key: string]: any } = {};
 
     donations.forEach(donation => {
       if (donation.status !== 'Pago' || !donation.paymentDate) return;
 
-      const paymentDate = new Date(donation.paymentDate);
-      const month = getMonth(paymentDate);
-      const year = getYear(paymentDate);
-      const monthYearKey = `${month}/${year}`;
+      const paymentDate = new Date(`${donation.paymentDate}T00:00:00Z`);
+      
+      let referenceMonthDate;
+      const paymentDayOfMonth = paymentDate.getUTCDate();
+
+      if (paymentDayOfMonth > closingDay) {
+          referenceMonthDate = paymentDate;
+      } else {
+          referenceMonthDate = subMonths(paymentDate, 1);
+      }
+
+      const referenceMonth = referenceMonthDate.getUTCMonth();
+      const referenceYear = referenceMonthDate.getUTCFullYear();
+      
+      const periodStartDate = setDate(new Date(Date.UTC(referenceYear, referenceMonth, 1)), closingDay + 1);
+      const periodEndDate = setDate(addMonths(new Date(Date.UTC(referenceYear, referenceMonth, 1)), 1), closingDay);
+
+      const monthYearKey = `${referenceMonth}/${referenceYear}`;
       
       const processCollaborator = (name: string, type: 'Assessor' | 'Mensageiro') => {
         if (!name) return;
@@ -105,9 +136,11 @@ export default function ComissoesPage() {
           monthlyResults[key] = {
             recipientName: name,
             recipientType: type,
-            referenceMonth: new Date(year, month).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
+            referenceDate: new Date(Date.UTC(referenceYear, referenceMonth)),
             baseAmount: 0,
             id: key,
+            periodStartDate,
+            periodEndDate,
           };
         }
         monthlyResults[key].baseAmount += donation.amount;
@@ -124,6 +157,7 @@ export default function ComissoesPage() {
       const collaborator = allCollaborators.find(c => c.name === result.recipientName && c.type === result.recipientType);
       
       const paymentInfo = commissionPayments[result.id];
+      let newClientsResult = 0;
 
       if (result.recipientType === 'Assessor') {
         advisorDetails = advisors.find(a => a.id === collaborator?.id);
@@ -131,6 +165,12 @@ export default function ComissoesPage() {
           const goalMet = result.baseAmount >= advisorDetails.goal;
           commissionRate = goalMet ? advisorDetails.maxCommissionPercentage : advisorDetails.minCommissionPercentage;
           commissionAmount = result.baseAmount * (commissionRate / 100);
+
+          newClientsResult = donors.filter(donor => {
+              if (donor.assessor !== advisorDetails?.name || !donor.joinDate) return false;
+              const joinDate = new Date(`${donor.joinDate}T00:00:00Z`);
+              return joinDate >= result.periodStartDate && joinDate <= result.periodEndDate;
+          }).length;
         }
       } else { 
         const messengerDetails = messengers.find(m => m.id === collaborator?.id);
@@ -142,6 +182,7 @@ export default function ComissoesPage() {
 
       return {
         ...result,
+        referenceMonth: result.referenceDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
         recipientId: collaborator?.id || '',
         goal: advisorDetails?.goal,
         commissionRate,
@@ -149,12 +190,12 @@ export default function ComissoesPage() {
         status: paymentInfo ? 'Paga' : 'Pendente',
         paymentDate: paymentInfo ? paymentInfo.paymentDate : undefined,
         newClientsGoal: advisorDetails?.newClientsGoal,
-        newClientsResult: 0,
+        newClientsResult: newClientsResult,
         minCommissionPercentage: advisorDetails?.minCommissionPercentage,
         maxCommissionPercentage: advisorDetails?.maxCommissionPercentage,
       };
     });
-  }, [donations, advisors, messengers, allCollaborators, commissionPayments]);
+  }, [donations, donors, advisors, messengers, allCollaborators, commissionPayments, loading, closingDay]);
 
   const { filteredCommissions, chartData, chartTitle, chartDescription } = useMemo(() => {
     let filteredData = commissionsData;

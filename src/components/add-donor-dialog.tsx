@@ -38,6 +38,7 @@ const addDonorSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
   code: z.string().optional(),
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
+  assessor: z.string().optional(),
   isLoyal: z.boolean().default(false),
   paymentDay: z.string().optional(),
   phones: z.array(z.object({
@@ -57,6 +58,8 @@ const addDonorSchema = z.object({
 
 type AddDonorFormValues = z.infer<typeof addDonorSchema>;
 
+const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Juliana Lima'];
+
 export function AddDonorDialog({
   open,
   onOpenChange,
@@ -70,6 +73,7 @@ export function AddDonorDialog({
       name: '',
       code: '',
       email: '',
+      assessor: '',
       isLoyal: false,
       phones: [{ value: '' }],
       address: {
@@ -114,8 +118,8 @@ export function AddDonorDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="h-[60vh] pr-6">
-              <div className="grid gap-6 py-4">
+            <ScrollArea className="h-[60vh]">
+              <div className="grid gap-6 py-4 px-2 pr-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -157,6 +161,32 @@ export function AddDonorDialog({
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={form.control}
+                  name="assessor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assessor</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um assessor (Opcional)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {assessors.map((assessor) => (
+                            <SelectItem key={assessor} value={assessor}>
+                              {assessor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                     control={form.control}
                     name="isLoyal"

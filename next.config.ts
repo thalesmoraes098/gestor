@@ -2,6 +2,9 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    allowedDevOrigins: ['https://*.cloudworkstations.dev'],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -12,9 +15,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
+        hostname: 'firebasestorage.googleapis.com',
       },
     ],
   },

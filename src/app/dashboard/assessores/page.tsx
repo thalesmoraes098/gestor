@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdvisorsTable } from "@/components/advisors-table";
@@ -9,12 +9,15 @@ import { AddAdvisorDialog } from "@/components/add-advisor-dialog";
 import { ReallocateClientsDialog } from "@/components/reallocate-clients-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 import type { Advisor } from "@/lib/mock-data";
-import { advisorsData } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { db, storage } from "@/lib/firebase";
 
 export default function AssessoresPage() {
   const { toast } = useToast();
-  const [advisors, setAdvisors] = useState<Advisor[]>(advisorsData);
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -23,16 +26,31 @@ export default function AssessoresPage() {
   const [isReallocationDialogOpen, setIsReallocationDialogOpen] = useState(false);
   const [dismissedAdvisor, setDismissedAdvisor] = useState<Advisor | null>(null);
 
+  useEffect(() => {
+    setLoading(true);
+    const unsubscribe = onSnapshot(collection(db, "advisors"), (querySnapshot) => {
+      const advisorsData: Advisor[] = [];
+      querySnapshot.forEach((doc) => {
+        advisorsData.push({ id: doc.id, ...doc.data() } as Advisor);
+      });
+      setAdvisors(advisorsData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const activeAdvisors = advisors.filter(
     (a) => a.status === 'Ativo' && a.id !== dismissedAdvisor?.id
   );
 
   const filteredAdvisors = useMemo(() => {
+    if (loading) return [];
     return advisors.filter(advisor => {
       if (filters.status === 'todos') return true;
       return advisor.status.toLowerCase() === filters.status;
     });
-  }, [advisors, filters]);
+  }, [advisors, filters, loading]);
 
   const handleApplyFilters = (newFilters: FilterFormValues) => {
     setFilters(newFilters);
@@ -48,40 +66,86 @@ export default function AssessoresPage() {
     setIsAdvisorDialogOpen(true);
   };
 
-  const handleDelete = (advisorId: string) => {
+  const handleDelete = async (advisorId: string) => {
     if (window.confirm('Tem certeza de que deseja excluir este assessor? Esta ação não pode ser desfeita.')) {
-      setAdvisors(prev => prev.filter(a => a.id !== advisorId));
-      toast({
-        title: 'Assessor Excluído',
-        description: 'O assessor foi removido com sucesso.',
-      });
-    }
-  };
-
-  const handleSave = (data: Omit<Advisor, 'id'> & { id?: string }) => {
-    const isEditing = !!data.id;
-    if (isEditing) {
-      if (data.status === 'Demitido' && advisorToEdit?.status !== 'Demitido') {
-        setDismissedAdvisor({ ...advisorToEdit, ...data } as Advisor);
-        setIsReallocationDialogOpen(true);
-      } else {
-        setAdvisors(prev => prev.map(a => a.id === data.id ? { ...a, ...data } : a));
-        toast({ title: 'Assessor Atualizado', description: 'Os dados do assessor foram atualizados.' });
+      try {
+        await deleteDoc(doc(db, "advisors", advisorId));
+        toast({
+          title: 'Assessor Excluído',
+          description: 'O assessor foi removido com sucesso.',
+        });
+      } catch (error) {
+        console.error("Error deleting advisor: ", error);
+        toast({
+          variant: "destructive",
+          title: 'Erro ao Excluir',
+          description: 'Não foi possível excluir o assessor.',
+        });
       }
-    } else {
-      const newAdvisor: Advisor = { ...data, id: `ASS${String(advisors.length + 1).padStart(3, '0')}` };
-      setAdvisors(prev => [...prev, newAdvisor]);
-      toast({ title: 'Assessor Adicionado', description: 'O novo assessor foi registrado com sucesso.' });
     }
-    setIsAdvisorDialogOpen(false);
   };
 
-  const handleReallocationConfirm = (reallocationData: any) => {
-      // Logic for reallocation would go here.
+  const handleSave = async (data: Omit<Advisor, 'id'> & { id?: string }) => {
+    setIsAdvisorDialogOpen(false);
+    const isEditing = !!data.id;
+
+    try {
+      let photoURL = data.photoUrl || (isEditing ? advisorToEdit?.photoUrl : '') || '';
+
+      if (data.photoUrl && data.photoUrl.startsWith('data:image')) {
+        const photoId = data.id || `advisor_${Date.now()}`;
+        const storageRef = ref(storage, `advisor-photos/${photoId}`);
+        const uploadResult = await uploadString(storageRef, data.photoUrl, 'data_url');
+        photoURL = await getDownloadURL(uploadResult.ref);
+      }
+      
+      const advisorData = { ...data, photoUrl: photoURL };
+
+      if (isEditing) {
+        const advisorId = data.id!;
+        const { id, ...dataToUpdate } = advisorData;
+        
+        if (data.status === 'Demitido' && advisorToEdit?.status !== 'Demitido') {
+          setDismissedAdvisor({ ...advisorToEdit, ...data, id: advisorId } as Advisor);
+          setIsReallocationDialogOpen(true);
+          // We only update the non-status fields, the final status update happens in reallocation
+          const { status, ...otherUpdates } = dataToUpdate;
+          await updateDoc(doc(db, "advisors", advisorId), otherUpdates);
+          toast({ title: 'Assessor Atualizado', description: 'Reatribua a carteira de clientes.' });
+        } else {
+          await updateDoc(doc(db, "advisors", advisorId), dataToUpdate);
+          toast({ title: 'Assessor Atualizado', description: 'Os dados do assessor foram atualizados.' });
+        }
+      } else {
+        const { id, ...dataToCreate } = advisorData;
+        await addDoc(collection(db, "advisors"), dataToCreate);
+        toast({ title: 'Assessor Adicionado', description: 'O novo assessor foi registrado com sucesso.' });
+      }
+    } catch (error) {
+        console.error("Error saving advisor: ", error);
+        toast({
+          variant: "destructive",
+          title: 'Erro ao Salvar',
+          description: 'Não foi possível salvar os dados do assessor.',
+        });
+    }
+  };
+
+  const handleReallocationConfirm = async (reallocationData: any) => {
       console.log('Reallocation Confirmed:', reallocationData);
       if (dismissedAdvisor) {
-        setAdvisors(prev => prev.map(a => a.id === dismissedAdvisor.id ? { ...a, status: 'Demitido' } : a));
-        toast({ title: 'Assessor Demitido', description: `O assessor ${dismissedAdvisor.name} foi demitido e a carteira reatribuída.` });
+        try {
+          const advisorRef = doc(db, "advisors", dismissedAdvisor.id);
+          await updateDoc(advisorRef, { status: 'Demitido' });
+          toast({ title: 'Assessor Demitido', description: `O assessor ${dismissedAdvisor.name} foi demitido e a carteira reatribuída.` });
+        } catch (error) {
+          console.error("Error updating advisor status to dismissed: ", error);
+          toast({
+            variant: "destructive",
+            title: 'Erro ao demitir',
+            description: 'Não foi possível atualizar o status do assessor.',
+          });
+        }
       }
       setIsReallocationDialogOpen(false);
       setDismissedAdvisor(null);
@@ -130,7 +194,13 @@ export default function AssessoresPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-            <AdvisorsTable data={filteredAdvisors} onEdit={handleEdit} onDelete={handleDelete} />
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-muted-foreground">Carregando assessores...</p>
+              </div>
+            ) : (
+              <AdvisorsTable data={filteredAdvisors} onEdit={handleEdit} onDelete={handleDelete} />
+            )}
           </CardContent>
         </Card>
       </div>

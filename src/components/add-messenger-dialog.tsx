@@ -118,21 +118,27 @@ export function AddMessengerDialog({
                             <div className="flex-1 space-y-2">
                                 <FormLabel>Foto do Mensageiro</FormLabel>
                                 <FormControl>
-                                    <Input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={(e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                                const file = e.target.files[0];
-                                                const reader = new FileReader();
-                                                reader.onloadend = () => {
-                                                    field.onChange(reader.result as string);
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                        }}
-                                        className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                    />
+                                  <label htmlFor="photo-upload-messenger" className="w-full cursor-pointer">
+                                      <div className="w-full h-10 px-4 py-2 bg-primary/10 text-primary rounded-lg flex items-center justify-center text-sm font-semibold hover:bg-primary/20 transition-colors">
+                                          Escolher arquivo
+                                      </div>
+                                      <Input 
+                                          id="photo-upload-messenger"
+                                          type="file" 
+                                          accept="image/*" 
+                                          className="hidden"
+                                          onChange={(e) => {
+                                              if (e.target.files && e.target.files[0]) {
+                                                  const file = e.target.files[0];
+                                                  const reader = new FileReader();
+                                                  reader.onloadend = () => {
+                                                      field.onChange(reader.result as string);
+                                                  };
+                                                  reader.readAsDataURL(file);
+                                              }
+                                          }}
+                                      />
+                                  </label>
                                 </FormControl>
                                 <FormMessage />
                             </div>

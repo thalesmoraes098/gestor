@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { Commission } from '@/lib/mock-data';
 
 const formatCurrency = (value?: number) => {
   if (value === undefined || value === null) return 'N/A';
@@ -13,7 +14,17 @@ const formatCurrency = (value?: number) => {
   }).format(value);
 };
 
-export function ViewCommissionDialog({ open, onOpenChange, commission }: { open: boolean; onOpenChange: (open: boolean) => void; commission?: any | null; }) {
+export function ViewCommissionDialog({ 
+  open, 
+  onOpenChange, 
+  commission,
+  onMarkAsPaid,
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  commission?: Commission | null;
+  onMarkAsPaid: (commissionId: string) => void;
+}) {
   const handleCancel = () => {
     onOpenChange(false);
   }
@@ -88,8 +99,11 @@ export function ViewCommissionDialog({ open, onOpenChange, commission }: { open:
             </div>
           </div>
         </ScrollArea>
-        <DialogFooter className="pt-4">
+        <DialogFooter className="pt-4 sm:justify-between">
           <Button type="button" variant="outline" onClick={handleCancel}>Fechar</Button>
+          {commission.status !== 'Paga' && (
+              <Button type="button" onClick={() => onMarkAsPaid(commission.id)}>Marcar como Paga</Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -10,7 +10,7 @@ import { PerformanceReportChart } from "@/components/dashboard-charts";
 import { useToast } from "@/hooks/use-toast";
 import { Filter } from "lucide-react";
 import type { Commission, Donation, Advisor, Messenger } from "@/lib/mock-data";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getMonth, getYear } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +21,11 @@ type Collaborator = {
   name: string;
   type: 'Assessor' | 'Mensageiro';
 }
+
+type CommissionPayment = {
+  status: 'Paga';
+  paymentDate: string;
+};
 
 export default function ComissoesPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -34,25 +39,46 @@ export default function ComissoesPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [messengers, setMessengers] = useState<Messenger[]>([]);
+  const [commissionPayments, setCommissionPayments] = useState<Record<string, CommissionPayment>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
+    let loadedCount = 0;
+    const totalToLoad = 4;
+    const doneLoading = () => {
+      loadedCount++;
+      if (loadedCount === totalToLoad) {
+        setLoading(false);
+      }
+    };
+
     const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
       setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
+      doneLoading();
     });
     const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
       setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
+      doneLoading();
     });
     const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
       setMessengers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Messenger)));
-      setLoading(false); // Consider loading finished when all data is fetched
+      doneLoading();
+    });
+    const unsubPayments = onSnapshot(collection(db, "commission_payments"), (snapshot) => {
+        const payments: Record<string, CommissionPayment> = {};
+        snapshot.forEach(doc => {
+            payments[doc.id] = doc.data() as CommissionPayment;
+        });
+        setCommissionPayments(payments);
+        doneLoading();
     });
   
     return () => {
       unsubDonations();
       unsubAdvisors();
       unsubMessengers();
+      unsubPayments();
     };
   }, []);
 
@@ -64,7 +90,6 @@ export default function ComissoesPage() {
   const commissionsData: Commission[] = useMemo(() => {
     const monthlyResults: { [key: string]: any } = {};
 
-    // Group donations by collaborator and month
     donations.forEach(donation => {
       if (donation.status !== 'Pago' || !donation.paymentDate) return;
 
@@ -80,7 +105,7 @@ export default function ComissoesPage() {
           monthlyResults[key] = {
             recipientName: name,
             recipientType: type,
-            referenceMonth: new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' }),
+            referenceMonth: new Date(year, month).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }),
             baseAmount: 0,
             id: key,
           };
@@ -97,6 +122,8 @@ export default function ComissoesPage() {
       let commissionAmount = 0;
       let advisorDetails: Advisor | undefined;
       const collaborator = allCollaborators.find(c => c.name === result.recipientName && c.type === result.recipientType);
+      
+      const paymentInfo = commissionPayments[result.id];
 
       if (result.recipientType === 'Assessor') {
         advisorDetails = advisors.find(a => a.id === collaborator?.id);
@@ -105,7 +132,7 @@ export default function ComissoesPage() {
           commissionRate = goalMet ? advisorDetails.maxCommissionPercentage : advisorDetails.minCommissionPercentage;
           commissionAmount = result.baseAmount * (commissionRate / 100);
         }
-      } else { // Messenger
+      } else { 
         const messengerDetails = messengers.find(m => m.id === collaborator?.id);
         if (messengerDetails && messengerDetails.commissionPercentage) {
           commissionRate = messengerDetails.commissionPercentage;
@@ -119,14 +146,15 @@ export default function ComissoesPage() {
         goal: advisorDetails?.goal,
         commissionRate,
         commissionAmount,
-        status: 'Pendente', // Placeholder status logic
+        status: paymentInfo ? 'Paga' : 'Pendente',
+        paymentDate: paymentInfo ? paymentInfo.paymentDate : undefined,
         newClientsGoal: advisorDetails?.newClientsGoal,
-        newClientsResult: 0, // Placeholder
+        newClientsResult: 0,
         minCommissionPercentage: advisorDetails?.minCommissionPercentage,
         maxCommissionPercentage: advisorDetails?.maxCommissionPercentage,
       };
     });
-  }, [donations, advisors, messengers, allCollaborators]);
+  }, [donations, advisors, messengers, allCollaborators, commissionPayments]);
 
   const { filteredCommissions, chartData, chartTitle, chartDescription } = useMemo(() => {
     let filteredData = commissionsData;
@@ -202,10 +230,31 @@ export default function ComissoesPage() {
     setFilters(newFilters);
   }
 
+  const handleMarkAsPaid = async (commissionId: string) => {
+    try {
+        await setDoc(doc(db, "commission_payments", commissionId), {
+            status: 'Paga',
+            paymentDate: new Date().toISOString().split('T')[0],
+        });
+        toast({
+            title: 'Comissão Paga',
+            description: 'A comissão foi marcada como paga com sucesso.',
+        });
+        setIsCommissionDialogOpen(false); // Close dialog on success
+    } catch (error) {
+        console.error("Error marking commission as paid: ", error);
+        toast({
+            variant: "destructive",
+            title: 'Erro ao Pagar',
+            description: 'Não foi possível marcar a comissão como paga.',
+        });
+    }
+  }
+
   return (
     <>
       <CommissionsFilterDialog open={isFilterOpen} onOpenChange={setIsFilterOpen} onApply={handleApplyFilters} collaborators={allCollaborators} />
-      <ViewCommissionDialog open={isCommissionDialogOpen} onOpenChange={handleDialogChange} commission={commissionToView} />
+      <ViewCommissionDialog open={isCommissionDialogOpen} onOpenChange={handleDialogChange} commission={commissionToView} onMarkAsPaid={handleMarkAsPaid} />
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>

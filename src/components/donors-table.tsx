@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Table,
   TableHeader,
@@ -88,7 +90,6 @@ export function DonorsTable({
         querySnapshot.forEach((doc) => {
           history.push({ id: doc.id, ...doc.data() } as Donation);
         });
-        // Sort by due date descending
         history.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
         setDonationHistory(history);
         setLoadingHistory(false);
@@ -98,8 +99,52 @@ export function DonorsTable({
   }, [historyDonor]);
 
 
-  const handleDownload = (format: 'Excel' | 'PDF') => {
-    // Placeholder for actual download logic
+  const handleDownload = (format: 'CSV' | 'PDF') => {
+    if (!historyDonor || donationHistory.length === 0) return;
+
+    if (format === 'PDF') {
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text(`Histórico de Doações: ${historyDonor.name}`, 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Código do Doador: ${historyDonor.code}`, 14, 30);
+      
+      autoTable(doc, {
+        startY: 40,
+        head: [['Data de Vencimento', 'Status', 'Valor', 'Assessor', 'Mensageiro']],
+        body: donationHistory.map(d => [
+          formatDate(d.dueDate),
+          d.status,
+          formatCurrency(d.amount),
+          d.assessor || '-',
+          d.messenger || '-',
+        ]),
+        theme: 'striped',
+      });
+      doc.save(`historico_${historyDonor.name.replace(/\s/g, '_')}.pdf`);
+    } else if (format === 'CSV') {
+        const headers = ['DataVencimento', 'Status', 'Valor', 'Assessor', 'Mensageiro'];
+        const rows = donationHistory.map(d => 
+            [
+                formatDate(d.dueDate),
+                d.status,
+                d.amount.toFixed(2).replace('.',','),
+                `"${d.assessor || ''}"`,
+                `"${d.messenger || ''}"`,
+            ].join(',')
+        );
+
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + [headers.join(','), ...rows].join('\n');
+            
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `historico_${historyDonor.name.replace(/\s/g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
   };
 
   return (
@@ -170,14 +215,14 @@ export function DonorsTable({
       </Table>
       
       <Dialog open={!!historyDonor} onOpenChange={(isOpen) => !isOpen && setHistoryDonor(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Histórico de Doações: {historyDonor?.name}</DialogTitle>
             <DialogDescription>
               Veja abaixo o histórico completo de doações. Você pode baixar os dados em formato Excel ou PDF.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="h-[300px] rounded-md border">
+          <ScrollArea className="h-[400px] rounded-md border">
             {loadingHistory ? (
               <div className="flex items-center justify-center h-full">Carregando histórico...</div>
             ) : (
@@ -211,10 +256,10 @@ export function DonorsTable({
               </Table>
             )}
           </ScrollArea>
-          <DialogFooter className="sm:justify-start">
-             <Button type="button" variant="outline" onClick={() => handleDownload('Excel')}>
+          <DialogFooter className="sm:justify-start gap-2 pt-4">
+             <Button type="button" variant="outline" onClick={() => handleDownload('CSV')}>
               <Download className="mr-2 h-4 w-4" />
-              Baixar em Excel
+              Baixar em CSV (Excel)
             </Button>
             <Button type="button" variant="outline" onClick={() => handleDownload('PDF')}>
               <Download className="mr-2 h-4 w-4" />

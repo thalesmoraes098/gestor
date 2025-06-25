@@ -156,6 +156,15 @@ export default function DoacoesPage() {
             await addDoc(collection(db, "donations"), dataToCreate);
             toast({ title: 'Doação Adicionada', description: 'A nova doação foi registrada com sucesso.' });
         }
+
+        if (data.status === 'Pago' && data.donorId) {
+            const donorRef = doc(db, "donors", data.donorId);
+            await updateDoc(donorRef, {
+                amount: data.amount, // Update the last donation amount
+                status: 'Ativo' // A donor who pays is active
+            });
+        }
+
     } catch (error) {
         console.error("Error saving donation: ", error);
         toast({

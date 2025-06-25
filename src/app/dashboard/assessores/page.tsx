@@ -132,7 +132,6 @@ export default function AssessoresPage() {
   };
 
   const handleReallocationConfirm = async (reallocationData: any) => {
-      console.log('Reallocation Confirmed:', reallocationData);
       if (dismissedAdvisor) {
         try {
           const advisorRef = doc(db, "advisors", dismissedAdvisor.id);

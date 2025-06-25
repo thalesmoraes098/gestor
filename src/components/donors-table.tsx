@@ -99,7 +99,6 @@ export function DonorsTable({
 
 
   const handleDownload = (format: 'Excel' | 'PDF') => {
-    console.log(`Downloading ${historyDonor?.name}'s history as ${format}`);
     // Placeholder for actual download logic
   };
 

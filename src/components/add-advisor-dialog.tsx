@@ -17,7 +17,7 @@ const addAdvisorSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
   commissionPercentage: z.coerce.number().min(0, { message: 'A comissão não pode ser negativa.' }).max(100, { message: 'A comissão não pode ser maior que 100.' }),
-  status: z.enum(['Ativo', 'Inativo']),
+  status: z.enum(['Ativo', 'Férias', 'Licença Médica', 'Suspensão', 'Demitido']),
 });
 
 type AddAdvisorFormValues = z.infer<typeof addAdvisorSchema>;
@@ -115,7 +115,10 @@ export function AddAdvisorDialog({ open, onOpenChange, advisor }: { open: boolea
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="Ativo">Ativo</SelectItem>
-                        <SelectItem value="Inativo">Inativo</SelectItem>
+                        <SelectItem value="Férias">Férias</SelectItem>
+                        <SelectItem value="Licença Médica">Licença Médica</SelectItem>
+                        <SelectItem value="Suspensão">Suspensão</SelectItem>
+                        <SelectItem value="Demitido">Demitido</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

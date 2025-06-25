@@ -27,12 +27,15 @@ type Advisor = {
   email: string;
   phone: string;
   commissionPercentage: number;
-  status: 'Ativo' | 'Inativo';
+  status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
 };
 
 const statusVariantMap: Record<Advisor['status'], VariantProps<typeof badgeVariants>['variant']> = {
   Ativo: 'default',
-  Inativo: 'secondary',
+  Férias: 'outline',
+  'Licença Médica': 'secondary',
+  Suspensão: 'destructive',
+  Demitido: 'secondary',
 };
 
 export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advisor: Advisor) => void; }) {

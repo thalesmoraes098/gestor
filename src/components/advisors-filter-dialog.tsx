@@ -24,7 +24,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const filterSchema = z.object({
-  status: z.enum(['todos', 'ativo', 'inativo']).default('todos'),
+  status: z.enum(['todos', 'ativo', 'férias', 'licença médica', 'suspensão', 'demitido']).default('todos'),
 });
 
 type FilterFormValues = z.infer<typeof filterSchema>;
@@ -79,7 +79,10 @@ export function AdvisorsFilterDialog({
                       >
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="todos" /></FormControl><FormLabel className="font-normal">Todos</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="ativo" /></FormControl><FormLabel className="font-normal">Ativo</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="inativo" /></FormControl><FormLabel className="font-normal">Inativo</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="férias" /></FormControl><FormLabel className="font-normal">Férias</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="licença médica" /></FormControl><FormLabel className="font-normal">Licença Médica</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="suspensão" /></FormControl><FormLabel className="font-normal">Suspensão</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0"><FormControl><RadioGroupItem value="demitido" /></FormControl><FormLabel className="font-normal">Demitido</FormLabel></FormItem>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />

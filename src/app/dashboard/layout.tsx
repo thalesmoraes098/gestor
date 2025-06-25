@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { getLoggedInUser, type User } from '@/lib/session';
 
 export default function DashboardLayout({
   children,
@@ -35,6 +36,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [user, setUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    setUser(getLoggedInUser());
+  }, []);
 
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -76,25 +82,27 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === settingsMenuItem.href}
-                  tooltip={settingsMenuItem.label}
-                >
-                  <Link href={settingsMenuItem.href}>
-                    <settingsMenuItem.icon />
-                    <span>{settingsMenuItem.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+             {user?.role === 'Admin' && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === settingsMenuItem.href}
+                    tooltip={settingsMenuItem.label}
+                  >
+                    <Link href={settingsMenuItem.href}>
+                      <settingsMenuItem.icon />
+                      <span>{settingsMenuItem.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+             )}
             <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Perfil">
+                <SidebarMenuButton tooltip={user?.name || 'Perfil'}>
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://placehold.co/40x40.png" alt="@shadcn" data-ai-hint="person" />
-                        <AvatarFallback>AD</AvatarFallback>
+                        <AvatarImage src="https://placehold.co/40x40.png" alt={user?.name || 'User'} data-ai-hint="person" />
+                        <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                     </Avatar>
-                    <span>Admin</span>
+                    <span>{user?.name || 'Usuário'}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

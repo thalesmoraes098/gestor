@@ -8,6 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { User } from '@/lib/session';
+import { setLoggedInUser } from '@/lib/session';
+
+// Mock user database for login simulation
+const users: (User & { password: string })[] = [
+    { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin', password: 'password' },
+    { id: 'user-1', name: 'Usuário Padrão', email: 'user@email.com', role: 'Usuário', password: 'password' },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -17,7 +25,13 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (email === 'admin@email.com' && password === 'password') {
+    
+    const foundUser = users.find(user => user.email === email && user.password === password);
+
+    if (foundUser) {
+      // Exclude password from the stored user object
+      const { password: _, ...userToStore } = foundUser;
+      setLoggedInUser(userToStore);
       router.push('/dashboard');
     } else {
       toast({

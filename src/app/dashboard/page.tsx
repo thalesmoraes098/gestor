@@ -53,22 +53,22 @@ export default function DashboardPage() {
     if (loading || !donations || !donors || !advisors || !messengers) return;
 
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+    const currentMonth = today.getUTCMonth();
+    const currentYear = today.getUTCFullYear();
     const todayString = today.toISOString().split('T')[0];
 
     // KPI Calculations
     const donationsThisMonth = donations.filter(d => {
       if (!d.paymentDate) return false;
       const paymentDate = new Date(d.paymentDate);
-      return d.status === 'Pago' && paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+      return d.status === 'Pago' && paymentDate.getUTCMonth() === currentMonth && paymentDate.getUTCFullYear() === currentYear;
     });
 
     const totalDonationsValue = donationsThisMonth.reduce((sum, d) => sum + d.amount, 0);
 
     const newDonorsThisMonth = donors.filter(d => {
       const joinDate = new Date(d.joinDate);
-      return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear;
+      return joinDate.getUTCMonth() === currentMonth && joinDate.getUTCFullYear() === currentYear;
     }).length;
 
     const pendingDonationsCount = donations.filter(d => d.status === 'Pendente').length;

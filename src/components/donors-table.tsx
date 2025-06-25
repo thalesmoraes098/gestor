@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableHeader,
@@ -29,14 +29,10 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MoreHorizontal, Pencil, Trash2, History, Download } from 'lucide-react';
-import type { Donor } from '@/lib/mock-data';
+import type { Donor, Donation } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
-
-type DonationHistory = {
-  date: string;
-  amount: number;
-  status: 'Pago' | 'Pendente' | 'Falhou';
-};
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const statusVariantMap: Record<Donor['status'], VariantProps<typeof badgeVariants>['variant']> = {
   Ativo: 'default',
@@ -44,20 +40,23 @@ const statusVariantMap: Record<Donor['status'], VariantProps<typeof badgeVariant
   Pendente: 'outline',
 };
 
-const donationStatusVariantMap: Record<DonationHistory['status'], VariantProps<typeof badgeVariants>['variant']> = {
+const donationStatusVariantMap: Record<Donation['status'], VariantProps<typeof badgeVariants>['variant']> = {
     Pago: 'default',
     Pendente: 'outline',
-    Falhou: 'destructive',
+    Atrasado: 'destructive',
+    Cancelado: 'secondary',
 };
 
 const formatCurrency = (value: number) => {
+  if (typeof value !== 'number') return 'R$ 0,00';
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
 };
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
+  if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -76,6 +75,28 @@ export function DonorsTable({
     onDelete: (donorId: string) => void;
 }) {
   const [historyDonor, setHistoryDonor] = useState<Donor | null>(null);
+  const [donationHistory, setDonationHistory] = useState<Donation[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (historyDonor) {
+        setLoadingHistory(true);
+        const q = query(collection(db, 'donations'), where('donorCode', '==', historyDonor.code));
+        const querySnapshot = await getDocs(q);
+        const history: Donation[] = [];
+        querySnapshot.forEach((doc) => {
+          history.push({ id: doc.id, ...doc.data() } as Donation);
+        });
+        // Sort by due date descending
+        history.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        setDonationHistory(history);
+        setLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+  }, [historyDonor]);
+
 
   const handleDownload = (format: 'Excel' | 'PDF') => {
     console.log(`Downloading ${historyDonor?.name}'s history as ${format}`);
@@ -158,34 +179,38 @@ export function DonorsTable({
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="h-[300px] rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historyDonor?.history && historyDonor.history.length > 0 ? (
-                  historyDonor.history.map((donation, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{formatDate(donation.date)}</TableCell>
-                      <TableCell>
-                        <Badge variant={donationStatusVariantMap[donation.status]}>
-                            {donation.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(donation.amount)}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
+            {loadingHistory ? (
+              <div className="flex items-center justify-center h-full">Carregando histórico...</div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center">Nenhuma doação encontrada.</TableCell>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {donationHistory.length > 0 ? (
+                    donationHistory.map((donation) => (
+                      <TableRow key={donation.id}>
+                        <TableCell>{formatDate(donation.dueDate)}</TableCell>
+                        <TableCell>
+                          <Badge variant={donationStatusVariantMap[donation.status]}>
+                              {donation.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(donation.amount)}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center">Nenhuma doação encontrada.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </ScrollArea>
           <DialogFooter className="sm:justify-start">
              <Button type="button" variant="outline" onClick={() => handleDownload('Excel')}>

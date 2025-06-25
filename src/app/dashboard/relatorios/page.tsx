@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format } from 'date-fns';
+import { format, getMonth, getYear } from 'date-fns';
 import { Download, ChevronsUpDown, Check } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PerformanceReportChart } from '@/components/dashboard-charts';
 import { savedClosingDay } from '../configuracoes/page';
-import { allCollaborators, advisorsData, messengersData, commissionsData } from '@/lib/mock-data';
+import type { Advisor, Messenger, Donation, Commission } from '@/lib/mock-data';
 
 const reportSchema = z.object({
   collaboratorId: z.string({ required_error: 'Por favor, selecione um colaborador.' }),
@@ -43,6 +45,37 @@ export default function RelatoriosPage() {
   const [isCollaboratorPopoverOpen, setIsCollaboratorPopoverOpen] = useState(false);
   const [chartData, setChartData] = useState<any[] | null>(null);
   const [chartTitle, setChartTitle] = useState('');
+  
+  // Firestore data
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
+  const [messengers, setMessengers] = useState<Messenger[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
+      setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
+    });
+    const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
+      setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
+    });
+    const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
+      setMessengers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Messenger)));
+      setLoading(false);
+    });
+
+    return () => {
+      unsubDonations();
+      unsubAdvisors();
+      unsubMessengers();
+    };
+  }, []);
+
+  const allCollaborators = [
+    ...advisors.map(a => ({ id: a.id, name: a.name, type: 'Assessor' as const })),
+    ...messengers.map(m => ({ id: m.id, name: m.name, type: 'Mensageiro' as const })),
+  ];
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
@@ -63,8 +96,8 @@ export default function RelatoriosPage() {
     }
     
     const fullCollaboratorData = collaborator.type === 'Assessor'
-        ? advisorsData.find(a => a.id === collaborator.id)
-        : messengersData.find(m => m.id === collaborator.id);
+        ? advisors.find(a => a.id === collaborator.id)
+        : messengers.find(m => m.id === collaborator.id);
 
     if (!fullCollaboratorData) {
         toast({ variant: 'destructive', title: 'Erro', description: 'Dados detalhados do colaborador não encontrados.' });
@@ -75,37 +108,36 @@ export default function RelatoriosPage() {
     const year = parseInt(data.year, 10);
     const closingDay = parseInt(savedClosingDay, 10);
 
-    const startDate = new Date(year, monthIndex - 1, closingDay);
-    startDate.setHours(0, 0, 0, 0);
+    const startDate = new Date(year, monthIndex, closingDay + 1);
+    const endDate = new Date(year, monthIndex + 1, closingDay);
 
-    const endDate = new Date(year, monthIndex, closingDay - 1);
-    endDate.setHours(23, 59, 59, 999);
-
-    const commissionsInPeriod = commissionsData.filter(c => {
-      if (!c.paymentDate) return false;
-      const paymentDate = new Date(c.paymentDate);
-      return (
-        c.recipientName === collaborator.name &&
-        paymentDate >= startDate &&
-        paymentDate <= endDate
-      );
+    const donationsInPeriod = donations.filter(d => {
+      if (!d.paymentDate) return false;
+      const paymentDate = new Date(d.paymentDate);
+      const isCorrectCollaborator = (d.assessor === collaborator.name && collaborator.type === 'Assessor') || 
+                                     (d.messenger === collaborator.name && collaborator.type === 'Mensageiro');
+      return isCorrectCollaborator && d.status === 'Pago' && paymentDate >= startDate && paymentDate <= endDate;
     });
 
-    if (commissionsInPeriod.length === 0) {
-      toast({ title: 'Nenhum dado', description: 'Nenhuma comissão encontrada para este colaborador no período selecionado.' });
+    if (donationsInPeriod.length === 0) {
+      toast({ title: 'Nenhum dado', description: 'Nenhuma doação encontrada para este colaborador no período selecionado.' });
       return;
     }
-    
-    const totalValue = commissionsInPeriod.reduce((sum, c) => sum + c.baseAmount, 0);
-    const totalCommission = commissionsInPeriod.reduce((sum, c) => sum + c.commissionAmount, 0);
-    const totalNewClients = commissionsInPeriod.reduce((sum, c) => sum + (c.newClientsResult || 0), 0);
-    
-    if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData && fullCollaboratorData.goal > 0) {
-        const goal = fullCollaboratorData.goal;
-        setChartData([{ name: collaborator.name, Resultado: totalValue, Meta: goal }]);
-        setChartTitle(`Desempenho vs. Meta de ${collaborator.name}`);
-    } else if (collaborator.type === 'Assessor') {
-        toast({ title: 'Gráfico não disponível', description: 'Gráficos de desempenho só estão disponíveis para assessores com meta definida.'})
+
+    let commissionRate = 0;
+    let commissionAmount = 0;
+    const totalValue = donationsInPeriod.reduce((sum, d) => sum + d.amount, 0);
+
+    if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData) {
+      const goalMet = totalValue >= fullCollaboratorData.goal;
+      commissionRate = goalMet ? fullCollaboratorData.maxCommissionPercentage : fullCollaboratorData.minCommissionPercentage;
+      commissionAmount = totalValue * (commissionRate / 100);
+      setChartData([{ name: collaborator.name, Resultado: totalValue, Meta: fullCollaboratorData.goal }]);
+      setChartTitle(`Desempenho vs. Meta de ${collaborator.name}`);
+    } else if (collaborator.type === 'Mensageiro' && 'commissionPercentage' in fullCollaboratorData) {
+      commissionRate = fullCollaboratorData.commissionPercentage || 0;
+      commissionAmount = totalValue * (commissionRate / 100);
+      toast({ title: 'Gráfico não disponível', description: 'Gráficos de desempenho só estão disponíveis para assessores com meta definida.'})
     }
     
     const { jsPDF } = await import('jspdf');
@@ -144,12 +176,11 @@ export default function RelatoriosPage() {
 
     autoTable(doc, {
       startY: finalY + 10,
-      head: [['Data Pag.', 'Valor Base', 'Comissão', 'Taxa Aplicada']],
-      body: commissionsInPeriod.map(c => [
-        c.paymentDate ? format(new Date(c.paymentDate), 'dd/MM/yyyy') : '-',
-        formatCurrency(c.baseAmount),
-        formatCurrency(c.commissionAmount),
-        `${c.commissionRate.toFixed(1)}%`
+      head: [['Data Pag.', 'Doador', 'Valor da Doação']],
+      body: donationsInPeriod.map(d => [
+        d.paymentDate ? format(new Date(d.paymentDate), 'dd/MM/yyyy') : '-',
+        d.donorName,
+        formatCurrency(d.amount),
       ]),
       theme: 'striped',
     });
@@ -159,18 +190,16 @@ export default function RelatoriosPage() {
     doc.setFontSize(12);
     doc.text('Resumo do Período', 14, finalY2 + 15);
     
-    let summaryText = `Valor Total (Vendas/Coletas): ${formatCurrency(totalValue)}\nComissão Total: ${formatCurrency(totalCommission)}`;
+    let summaryText = `Total Arrecadado/Coletado: ${formatCurrency(totalValue)}\nComissão Calculada: ${formatCurrency(commissionAmount)}`;
 
     if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData && fullCollaboratorData.goal > 0) {
         const goal = fullCollaboratorData.goal;
         const goalMet = totalValue >= goal;
         const achievement = (totalValue / goal) * 100;
-        const appliedCommission = goalMet ? fullCollaboratorData.maxCommissionPercentage : fullCollaboratorData.minCommissionPercentage;
         
-        summaryText += `\nResultado (Clientes): ${totalNewClients} / ${fullCollaboratorData.newClientsGoal}`;
         summaryText += `\n\nMeta Arrecadação: ${formatCurrency(goal)}`;
         summaryText += `\nDesempenho da Meta: ${achievement.toFixed(2)}% (${goalMet ? 'Atingida' : 'Não Atingida'})`;
-        summaryText += `\nComissão Aplicada: ${appliedCommission?.toFixed(1)}% (${goalMet ? 'Máxima' : 'Mínima'})`;
+        summaryText += `\nComissão Aplicada: ${commissionRate.toFixed(1)}% (${goalMet ? 'Máxima' : 'Mínima'})`;
     }
 
     doc.text(summaryText, 14, finalY2 + 22);
@@ -194,102 +223,104 @@ export default function RelatoriosPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <FormField
-                  control={form.control}
-                  name="collaboratorId"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Colaborador</FormLabel>
-                        <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
-                                        {field.value ? allCollaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Buscar colaborador..." />
-                                    <CommandList><CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
-                                    <CommandGroup>
-                                        {allCollaborators.map((c) => (
-                                            <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
-                                                <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                {c.name} ({c.type})
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {loading ? <p>Carregando dados...</p> : (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="collaboratorId"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Colaborador</FormLabel>
+                          <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
+                              <PopoverTrigger asChild>
+                                  <FormControl>
+                                      <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                          {field.value ? allCollaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
+                                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                  </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                  <Command>
+                                      <CommandInput placeholder="Buscar colaborador..." />
+                                      <CommandList><CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                                      <CommandGroup>
+                                          {allCollaborators.map((c) => (
+                                              <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
+                                                  <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                  {c.name} ({c.type})
+                                              </CommandItem>
+                                          ))}
+                                      </CommandGroup>
+                                      </CommandList>
+                                  </Command>
+                              </PopoverContent>
+                          </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="month"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Mês</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o mês" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {months.map((month) => (
-                            <SelectItem key={month.value} value={month.value}>
-                              {month.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="month"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Mês</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o mês" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {months.map((month) => (
+                              <SelectItem key={month.value} value={month.value}>
+                                {month.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="year"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Ano</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o ano" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {years.map((year) => (
-                            <SelectItem key={year} value={year}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="year"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Ano</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o ano" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {years.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <Button type="submit">
-                <Download className="mr-2 h-4 w-4" />
-                Gerar Relatório PDF
-              </Button>
-            </form>
-          </Form>
+                <Button type="submit">
+                  <Download className="mr-2 h-4 w-4" />
+                  Gerar Relatório PDF
+                </Button>
+              </form>
+            </Form>
+          )}
         </CardContent>
       </Card>
       

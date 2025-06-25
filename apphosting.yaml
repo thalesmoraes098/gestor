@@ -1,6 +1,15 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+buildConfig:
+  secrets:
+    - FIREBASE_API_KEY
+    - FIREBASE_AUTH_DOMAIN
+    - FIREBASE_PROJECT_ID
+    - FIREBASE_STORAGE_BUCKET
+    - FIREBASE_MESSAGING_SENDER_ID
+    - FIREBASE_APP_ID
+
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.

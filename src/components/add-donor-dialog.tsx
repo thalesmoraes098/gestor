@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
@@ -60,36 +61,62 @@ const addDonorSchema = z.object({
 
 type AddDonorFormValues = z.infer<typeof addDonorSchema>;
 
-const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Juliana Lima'];
+const defaultFormValues = {
+  name: '',
+  code: '',
+  email: '',
+  assessor: '',
+  isLoyal: false,
+  paymentDay: '',
+  phones: [{ value: '' }],
+  addresses: [{
+    cep: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    reference: '',
+  }]
+};
+
+const assessors = ['Carlos Almeida', 'Ana Beatriz', 'Juliana Lima', 'Direto'];
 
 export function AddDonorDialog({
   open,
   onOpenChange,
+  donor,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  donor?: any | null;
 }) {
+  const isEditMode = !!donor;
+
   const form = useForm<AddDonorFormValues>({
     resolver: zodResolver(addDonorSchema),
-    defaultValues: {
-      name: '',
-      code: '',
-      email: '',
-      assessor: '',
-      isLoyal: false,
-      phones: [{ value: '' }],
-      addresses: [{
-        cep: '',
-        street: '',
-        number: '',
-        complement: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        reference: '',
-      }]
-    },
+    defaultValues: defaultFormValues,
   });
+
+  useEffect(() => {
+    if (open) {
+      if (isEditMode && donor) {
+        form.reset({
+          name: donor.name || '',
+          code: donor.code || '',
+          email: donor.email || '',
+          assessor: donor.assessor || '',
+          isLoyal: donor.isLoyal || false,
+          paymentDay: donor.paymentDay || '',
+          phones: donor.phones && donor.phones.length > 0 ? donor.phones : [{ value: '' }],
+          addresses: donor.addresses && donor.addresses.length > 0 ? donor.addresses : [{ cep: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', reference: '' }],
+        });
+      } else {
+        form.reset(defaultFormValues);
+      }
+    }
+  }, [open, donor, isEditMode, form]);
 
   const { fields: phoneFields, append: appendPhone, remove: removePhone } = useFieldArray({
     control: form.control,
@@ -104,23 +131,21 @@ export function AddDonorDialog({
   const isLoyal = form.watch('isLoyal');
 
   const onSubmit = (data: AddDonorFormValues) => {
-    console.log('Dados do novo doador:', data);
+    console.log(isEditMode ? 'Dados do doador atualizados:' : 'Dados do novo doador:', data);
     onOpenChange(false);
-    form.reset();
   };
   
   const handleCancel = () => {
     onOpenChange(false);
-    setTimeout(() => form.reset(), 300);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Adicionar Doador</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Editar Doador' : 'Adicionar Doador'}</DialogTitle>
           <DialogDescription>
-            Preencha os dados para cadastrar um novo doador.
+            {isEditMode ? 'Atualize os dados do doador.' : 'Preencha os dados para cadastrar um novo doador.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -220,7 +245,7 @@ export function AddDonorDialog({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Dia do Pagamento</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione o dia do pagamento" />
@@ -421,7 +446,7 @@ export function AddDonorDialog({
             </ScrollArea>
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={handleCancel}>Cancelar</Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="submit">{isEditMode ? 'Salvar Alterações' : 'Salvar'}</Button>
             </DialogFooter>
           </form>
         </Form>

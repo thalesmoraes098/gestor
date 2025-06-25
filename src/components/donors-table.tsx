@@ -75,7 +75,7 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export function DonorsTable({ data }: { data: Donor[] }) {
+export function DonorsTable({ data, onEdit }: { data: any[]; onEdit: (donor: any) => void; }) {
   const [historyDonor, setHistoryDonor] = useState<Donor | null>(null);
 
   return (
@@ -125,7 +125,7 @@ export function DonorsTable({ data }: { data: Donor[] }) {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onEdit(donor)}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>

@@ -27,7 +27,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -82,22 +81,13 @@ export default function DashboardLayout({
             <div className="flex-1" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={'https://placehold.co/40x40.png'} alt={'Usuário'} data-ai-hint="person" />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <UserIcon className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                    <Link href="/dashboard/perfil">
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>Meu Perfil</span>
-                    </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link href="/dashboard/configuracoes">
                         <Settings className="mr-2 h-4 w-4" />

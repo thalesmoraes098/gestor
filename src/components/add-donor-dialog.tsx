@@ -34,7 +34,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { advisorNames } from '@/lib/mock-data';
 import type { Donor } from '@/lib/mock-data';
 
 const addressSchema = z.object({
@@ -88,11 +87,13 @@ export function AddDonorDialog({
   onOpenChange,
   donor,
   onSave,
+  advisorNames,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   donor?: Donor | null;
   onSave: (data: Omit<Donor, 'id' | 'history' | 'amount'> & { id?: string }) => void;
+  advisorNames: string[];
 }) {
   const isEditMode = !!donor;
 

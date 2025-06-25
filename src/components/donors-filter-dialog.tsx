@@ -35,7 +35,6 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { advisorNames } from '@/lib/mock-data';
 
 const filterSchema = z.object({
   status: z.enum(['todos', 'ativo', 'inativo', 'pendente']).default('todos'),
@@ -50,17 +49,19 @@ export type FilterFormValues = z.infer<typeof filterSchema>;
 
 const defaultValues: FilterFormValues = {
   status: 'todos',
-  assessor: '',
+  assessor: 'todos',
 };
 
 export function DonorsFilterDialog({
   open,
   onOpenChange,
-  onApply
+  onApply,
+  advisorNames,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApply: (filters: FilterFormValues) => void;
+  advisorNames: string[];
 }) {
   const form = useForm<FilterFormValues>({
     resolver: zodResolver(filterSchema),
@@ -137,7 +138,7 @@ export function DonorsFilterDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Assessor</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value || 'todos'}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um assessor" />

@@ -6,6 +6,10 @@ Este é um sistema de gestão completo construído com Next.js, Firebase e ShadC
 
 Para que a aplicação funcione, você precisa conectá-la a um projeto Firebase. Siga os passos abaixo.
 
+### Nota Importante sobre Permissões
+
+Para habilitar os serviços do Firebase (como o App Hosting), sua conta do Google precisa ter a permissão de **Usuário da conta de faturamento** (`Billing Account User`) na conta de faturamento do Google Cloud associada. Se você encontrar um erro de permissão durante a publicação, peça ao administrador da conta de faturamento para conceder essa permissão ao seu usuário.
+
 ### 1. Crie um Projeto no Firebase
 
 Se você ainda não tem um projeto Firebase, crie um gratuitamente:

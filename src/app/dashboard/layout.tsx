@@ -53,7 +53,7 @@ export default function DashboardLayout({
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <Button asChild variant="ghost" className="w-full justify-center text-lg font-bold text-primary bg-primary/10 hover:bg-primary/20">
-            <Link href="/dashboard">JUVENÓPOLIS</Link>
+            <Link href="/dashboard">GESTOR DIGITAL</Link>
           </Button>
         </SidebarHeader>
         <SidebarContent>
@@ -105,6 +105,9 @@ export default function DashboardLayout({
             <SidebarTrigger className="flex md:hidden"/>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
+        <footer className="p-4 text-center text-sm text-muted-foreground border-t">
+          2025 TODOS OS DIREITOS RESERVADOS. DESENVOLVIDO POR <a href="https://wa.me/5582996595164" target="_blank" rel="noopener noreferrer" className="font-bold">VTEX DIGITAL</a>
+        </footer>
       </SidebarInset>
     </SidebarProvider>
   );

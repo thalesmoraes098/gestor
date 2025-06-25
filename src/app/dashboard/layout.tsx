@@ -52,8 +52,8 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <Button variant="ghost" className="w-full justify-center text-lg font-bold text-primary bg-primary/10 hover:bg-primary/20">
-            JUVENÓPOLIS
+          <Button asChild variant="ghost" className="w-full justify-center text-lg font-bold text-primary bg-primary/10 hover:bg-primary/20">
+            <Link href="/dashboard">JUVENÓPOLIS</Link>
           </Button>
         </SidebarHeader>
         <SidebarContent>

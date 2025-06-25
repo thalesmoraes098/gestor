@@ -5,18 +5,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Download, ChevronsUpDown, Check } from 'lucide-react';
+import { Download, ChevronsUpDown, Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PerformanceReportChart } from '@/components/dashboard-charts';
+import { savedClosingDay } from '../configuracoes/page';
 
 // Mock data from other pages
 const advisorsData = [
@@ -36,12 +36,12 @@ const messengersData = [
 ];
 
 const commissionsData = [
-    { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 10000, commissionRate: 3, commissionAmount: 300, status: 'Paga' as const, paymentDate: '2024-08-05', newClientsGoal: 10, newClientsResult: 8, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
+    { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 10000, commissionRate: 3, commissionAmount: 300, status: 'Paga' as const, paymentDate: '2024-07-03', newClientsGoal: 10, newClientsResult: 8, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
     { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, goal: 18000, baseAmount: 12500, commissionRate: 3.5, commissionAmount: 437.50, status: 'Pendente' as const, paymentDate: '2024-07-25', newClientsGoal: 12, newClientsResult: 13, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
-    { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro' as const, baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga' as const, paymentDate: '2024-08-05' },
-    { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 9500, commissionRate: 3, commissionAmount: 285, status: 'Paga' as const, paymentDate: '2024-07-05', newClientsGoal: 10, newClientsResult: 11, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
-    { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro' as const, baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga' as const, paymentDate: '2024-07-05' },
-    { id: 'COM006', referenceMonth: 'Junho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, goal: 18000, baseAmount: 20000, commissionRate: 5.5, commissionAmount: 1100, status: 'Paga' as const, paymentDate: '2024-07-05', newClientsGoal: 12, newClientsResult: 10, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
+    { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro' as const, baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga' as const, paymentDate: '2024-07-10' },
+    { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 9500, commissionRate: 3, commissionAmount: 285, status: 'Paga' as const, paymentDate: '2024-06-05', newClientsGoal: 10, newClientsResult: 11, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
+    { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro' as const, baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga' as const, paymentDate: '2024-06-15' },
+    { id: 'COM006', referenceMonth: 'Junho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, goal: 18000, baseAmount: 20000, commissionRate: 5.5, commissionAmount: 1100, status: 'Paga' as const, paymentDate: '2024-06-20', newClientsGoal: 12, newClientsResult: 10, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
 ];
 
 const allCollaborators = [
@@ -51,15 +51,22 @@ const allCollaborators = [
 
 const reportSchema = z.object({
   collaboratorId: z.string({ required_error: 'Por favor, selecione um colaborador.' }),
-  dateRange: z.object({
-    from: z.date({ required_error: 'A data inicial é obrigatória.' }),
-    to: z.date({ required_error: 'A data final é obrigatória.' }),
-  }),
+  month: z.string({ required_error: 'O mês é obrigatório.' }),
+  year: z.string({ required_error: 'O ano é obrigatório.' }),
 });
 
 type ReportFormValues = z.infer<typeof reportSchema>;
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+const months = [
+    { value: "0", label: "Janeiro" }, { value: "1", label: "Fevereiro" }, { value: "2", label: "Março" }, { value: "3", label: "Abril" },
+    { value: "4", label: "Maio" }, { value: "5", label: "Junho" }, { value: "6", label: "Julho" }, { value: "7", label: "Agosto" },
+    { value: "8", label: "Setembro" }, { value: "9", label: "Outubro" }, { value: "10", label: "Novembro" }, { value: "11", label: "Dezembro" },
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 5 }, (_, i) => String(currentYear - i));
 
 export default function RelatoriosPage() {
   const { toast } = useToast();
@@ -69,6 +76,10 @@ export default function RelatoriosPage() {
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
+    defaultValues: {
+        month: String(new Date().getMonth()),
+        year: String(currentYear),
+    }
   });
 
   const onSubmit = async (data: ReportFormValues) => {
@@ -80,7 +91,7 @@ export default function RelatoriosPage() {
       toast({ variant: 'destructive', title: 'Erro', description: 'Colaborador não encontrado.' });
       return;
     }
-
+    
     const fullCollaboratorData = collaborator.type === 'Assessor'
         ? advisorsData.find(a => a.id === collaborator.id)
         : messengersData.find(m => m.id === collaborator.id);
@@ -90,13 +101,19 @@ export default function RelatoriosPage() {
         return;
     }
 
+    const monthIndex = parseInt(data.month, 10);
+    const year = parseInt(data.year, 10);
+    const closingDay = parseInt(savedClosingDay, 10);
+
+    const startDate = new Date(year, monthIndex - 1, closingDay);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(year, monthIndex, closingDay - 1);
+    endDate.setHours(23, 59, 59, 999);
+
     const commissionsInPeriod = commissionsData.filter(c => {
       if (!c.paymentDate) return false;
       const paymentDate = new Date(c.paymentDate);
-      // Adjust for timezone issues by comparing dates without time
-      const startDate = new Date(data.dateRange.from.setHours(0, 0, 0, 0));
-      const endDate = new Date(data.dateRange.to.setHours(23, 59, 59, 999));
-      
       return (
         c.recipientName === collaborator.name &&
         paymentDate >= startDate &&
@@ -113,7 +130,6 @@ export default function RelatoriosPage() {
     const totalCommission = commissionsInPeriod.reduce((sum, c) => sum + c.commissionAmount, 0);
     const totalNewClients = commissionsInPeriod.reduce((sum, c) => sum + (c.newClientsResult || 0), 0);
     
-    // Chart Data
     if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData && fullCollaboratorData.goal > 0) {
         const goal = fullCollaboratorData.goal;
         setChartData([{ name: collaborator.name, Resultado: totalValue, Meta: goal }]);
@@ -122,7 +138,6 @@ export default function RelatoriosPage() {
         toast({ title: 'Gráfico não disponível', description: 'Gráficos de desempenho só estão disponíveis para assessores com meta definida.'})
     }
     
-    // PDF Generation
     const { jsPDF } = await import('jspdf');
     const autoTable = (await import('jspdf-autotable')).default;
 
@@ -132,7 +147,7 @@ export default function RelatoriosPage() {
     doc.text('Relatório de Desempenho Individual', 14, 22);
     
     doc.setFontSize(11);
-    doc.text(`Período: ${format(data.dateRange.from, 'dd/MM/yyyy')} a ${format(data.dateRange.to, 'dd/MM/yyyy')}`, 14, 30);
+    doc.text(`Período: ${format(startDate, 'dd/MM/yyyy')} a ${format(endDate, 'dd/MM/yyyy')}`, 14, 30);
     
     if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData) {
         autoTable(doc, {
@@ -155,14 +170,13 @@ export default function RelatoriosPage() {
         });
     }
 
-
     const finalY = (doc as any).lastAutoTable.finalY;
 
     autoTable(doc, {
       startY: finalY + 10,
       head: [['Data Pag.', 'Valor Base', 'Comissão', 'Taxa Aplicada']],
       body: commissionsInPeriod.map(c => [
-        c.paymentDate ? format(new Date(c.paymentDate), 'dd/MM/yyyy', { timeZone: 'UTC' }) : '-',
+        c.paymentDate ? format(new Date(c.paymentDate), 'dd/MM/yyyy') : '-',
         formatCurrency(c.baseAmount),
         formatCurrency(c.commissionAmount),
         `${c.commissionRate.toFixed(1)}%`
@@ -191,7 +205,8 @@ export default function RelatoriosPage() {
 
     doc.text(summaryText, 14, finalY2 + 22);
 
-    doc.save(`relatorio_${collaborator.name.replace(/\s/g, '_')}_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    const monthLabel = months.find(m => m.value === data.month)?.label.toLowerCase();
+    doc.save(`relatorio_${collaborator.name.replace(/\s/g, '_')}_${monthLabel}_${data.year}.pdf`);
   };
 
   return (
@@ -204,7 +219,9 @@ export default function RelatoriosPage() {
       <Card className="rounded-2xl border-0 shadow-lg">
         <CardHeader>
           <CardTitle>Gerar Relatório</CardTitle>
-          <CardDescription>Selecione um colaborador e o período para gerar o relatório em PDF.</CardDescription>
+          <CardDescription>
+            Selecione um colaborador e o período para gerar o relatório em PDF. O período será calculado com base no dia de fechamento definido nas configurações (Dia {savedClosingDay}).
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -248,11 +265,24 @@ export default function RelatoriosPage() {
 
                 <FormField
                   control={form.control}
-                  name="dateRange.from"
+                  name="month"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Data Inicial</FormLabel>
-                      <Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "PPP", { locale: ptBR })) : (<span>Escolha a data</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover>
+                      <FormLabel>Mês</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o mês" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {months.map((month) => (
+                            <SelectItem key={month.value} value={month.value}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -260,11 +290,24 @@ export default function RelatoriosPage() {
 
                 <FormField
                   control={form.control}
-                  name="dateRange.to"
+                  name="year"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Data Final</FormLabel>
-                      <Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "PPP", { locale: ptBR })) : (<span>Escolha a data</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover>
+                      <FormLabel>Ano</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o ano" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {years.map((year) => (
+                            <SelectItem key={year} value={year}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

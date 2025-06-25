@@ -83,8 +83,9 @@ Esta é a etapa final e mais importante. Você precisa fornecer os valores das s
 2.  Você verá seu back-end listado (por exemplo, "gestor"). **Clique no card do seu back-end** para abrir a página de detalhes dele.
 3.  Na página de detalhes, você verá várias abas na parte superior, como "Visão geral", "Lançamentos", etc. Clique na aba **"Configurações"**.
 4.  Dentro da aba "Configurações", você verá um menu à esquerda com as opções "Domínios", "Implantação" e "Ambiente". **Clique em "Ambiente"**.
-5.  Nesta tela, você verá a lista de variáveis de ambiente que definimos no arquivo `apphosting.yaml`. Para cada uma, haverá um campo para adicionar o valor do "Secret".
-6.  Cole o valor correspondente que você copiou do seu `firebaseConfig` no campo apropriado para cada "Secret".
+5.  **Crie o Ambiente:** A tela solicitará um "Nome do ambiente". Digite `prod` (para "produção") e clique em **"Salvar"**.
+6.  **Adicione os Secrets:** Após salvar, a página será atualizada e exibirá a lista de "Secrets" que definimos no arquivo `apphosting.yaml`. Para cada uma, haverá um campo para adicionar o valor.
+7.  Cole o valor correspondente que você copiou do seu `firebaseConfig` no campo apropriado para cada "Secret".
 
 | Nome do Secret (no App Hosting)       | Valor (do seu `firebaseConfig`)     |
 | ------------------------------------- | ----------------------------------- |

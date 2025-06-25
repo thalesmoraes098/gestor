@@ -17,23 +17,35 @@ type Commission = {
   recipientType: 'Assessor' | 'Mensageiro';
   goal?: number;
   baseAmount: number;
-  commissionRate: number;
+  commissionRate: number; // The applied rate
   commissionAmount: number;
   status: 'Paga' | 'Pendente';
   paymentDate?: string;
+  // For context in dialogs
+  newClientsGoal?: number;
+  newClientsResult?: number;
+  minCommissionPercentage?: number;
+  maxCommissionPercentage?: number;
 };
 
 const commissionsData: Commission[] = [
-  { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', goal: 15000, baseAmount: 10000, commissionRate: 5, commissionAmount: 500, status: 'Paga', paymentDate: '2024-08-05' },
-  { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor', goal: 18000, baseAmount: 12500, commissionRate: 5.5, commissionAmount: 687.50, status: 'Pendente' },
-  { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro', baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga', paymentDate: '2024-08-05' },
-  { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', goal: 15000, baseAmount: 9500, commissionRate: 5, commissionAmount: 475, status: 'Paga', paymentDate: '2024-07-05' },
-  { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro', baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga', paymentDate: '2024-07-05' },
+    // Carlos (Julho) - Meta R$15k, Resultado R$10k -> Goal NOT met -> min commission (3%) -> 10000 * 0.03 = 300
+    { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', goal: 15000, baseAmount: 10000, commissionRate: 3, commissionAmount: 300, status: 'Paga', paymentDate: '2024-08-05', newClientsGoal: 10, newClientsResult: 8, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
+    // Ana (Julho) - Meta R$18k, Resultado R$12.5k -> Goal NOT met -> min commission (3.5%) -> 12500 * 0.035 = 437.50
+    { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor', goal: 18000, baseAmount: 12500, commissionRate: 3.5, commissionAmount: 437.50, status: 'Pendente', newClientsGoal: 12, newClientsResult: 13, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
+    // Fabio (Mensageiro) - No R$ goal
+    { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro', baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga', paymentDate: '2024-08-05' },
+    // Carlos (Junho) - Meta R$15k, Resultado R$9.5k -> Goal NOT met -> min commission (3%) -> 9500 * 0.03 = 285
+    { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor', goal: 15000, baseAmount: 9500, commissionRate: 3, commissionAmount: 285, status: 'Paga', paymentDate: '2024-07-05', newClientsGoal: 10, newClientsResult: 11, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
+    // Hugo (Mensageiro) - No R$ goal
+    { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro', baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga', paymentDate: '2024-07-05' },
+     // Ana (Junho) - Meta R$18k, Resultado R$20k -> Goal MET -> max commission (5.5%) -> 20000 * 0.055 = 1100
+    { id: 'COM006', referenceMonth: 'Junho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor', goal: 18000, baseAmount: 20000, commissionRate: 5.5, commissionAmount: 1100, status: 'Paga', paymentDate: '2024-07-05', newClientsGoal: 12, newClientsResult: 10, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
 ];
 
 const advisorsData = [
-  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', commissionPercentage: 5, goal: 15000, status: 'Ativo' as const },
-  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', commissionPercentage: 5.5, goal: 18000, status: 'Ativo' as const },
+  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', minCommissionPercentage: 3, maxCommissionPercentage: 5, goal: 15000, newClientsGoal: 10, status: 'Ativo' as const },
+  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5, goal: 18000, newClientsGoal: 12, status: 'Ativo' as const },
 ];
 
 type FilterFormValues = {

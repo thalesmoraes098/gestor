@@ -20,11 +20,11 @@ import { PerformanceReportChart } from '@/components/dashboard-charts';
 
 // Mock data from other pages
 const advisorsData = [
-  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', commissionPercentage: 5, goal: 15000, status: 'Ativo' as const },
-  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', commissionPercentage: 5.5, goal: 18000, status: 'Ativo' as const },
-  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', commissionPercentage: 6, goal: 20000, status: 'Demitido' as const },
-  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', commissionPercentage: 4.5, goal: 12000, status: 'Férias' as const },
-  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', commissionPercentage: 5.2, goal: 16000, status: 'Suspensão' as const },
+  { id: 'ASS001', name: 'Carlos Almeida', email: 'carlos.almeida@example.com', phone: '(11) 98765-1111', minCommissionPercentage: 3, maxCommissionPercentage: 5, goal: 15000, newClientsGoal: 10, status: 'Ativo' as const },
+  { id: 'ASS002', name: 'Ana Beatriz', email: 'ana.beatriz@example.com', phone: '(21) 91234-2222', minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5, goal: 18000, newClientsGoal: 12, status: 'Ativo' as const },
+  { id: 'ASS003', name: 'Juliana Lima', email: 'juliana.lima@example.com', phone: '(51) 94444-3333', minCommissionPercentage: 4, maxCommissionPercentage: 6, goal: 20000, newClientsGoal: 15, status: 'Demitido' as const },
+  { id: 'ASS004', name: 'Marcos Ribeiro', email: 'marcos.ribeiro@example.com', phone: '(31) 99999-4444', minCommissionPercentage: 2.5, maxCommissionPercentage: 4.5, goal: 12000, newClientsGoal: 8, status: 'Férias' as const },
+  { id: 'ASS005', name: 'Ricardo Neves', email: 'ricardo.neves@example.com', phone: '(41) 98888-5555', minCommissionPercentage: 3.2, maxCommissionPercentage: 5.2, goal: 16000, newClientsGoal: 11, status: 'Suspensão' as const },
 ];
 
 const messengersData = [
@@ -36,11 +36,12 @@ const messengersData = [
 ];
 
 const commissionsData = [
-  { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 10000, commissionRate: 5, commissionAmount: 500, status: 'Paga' as const, paymentDate: '2024-08-05' },
-  { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, goal: 18000, baseAmount: 12500, commissionRate: 5.5, commissionAmount: 687.50, status: 'Pendente' as const, paymentDate: '2024-07-25' },
-  { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro' as const, baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga' as const, paymentDate: '2024-08-05' },
-  { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 9500, commissionRate: 5, commissionAmount: 475, status: 'Paga' as const, paymentDate: '2024-07-05' },
-  { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro' as const, baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga' as const, paymentDate: '2024-07-05' },
+    { id: 'COM001', referenceMonth: 'Julho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 10000, commissionRate: 3, commissionAmount: 300, status: 'Paga' as const, paymentDate: '2024-08-05', newClientsGoal: 10, newClientsResult: 8, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
+    { id: 'COM002', referenceMonth: 'Julho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, goal: 18000, baseAmount: 12500, commissionRate: 3.5, commissionAmount: 437.50, status: 'Pendente' as const, paymentDate: '2024-07-25', newClientsGoal: 12, newClientsResult: 13, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
+    { id: 'COM003', referenceMonth: 'Julho/2024', recipientName: 'Fábio Souza', recipientType: 'Mensageiro' as const, baseAmount: 5000, commissionRate: 2.5, commissionAmount: 125, status: 'Paga' as const, paymentDate: '2024-08-05' },
+    { id: 'COM004', referenceMonth: 'Junho/2024', recipientName: 'Carlos Almeida', recipientType: 'Assessor' as const, goal: 15000, baseAmount: 9500, commissionRate: 3, commissionAmount: 285, status: 'Paga' as const, paymentDate: '2024-07-05', newClientsGoal: 10, newClientsResult: 11, minCommissionPercentage: 3, maxCommissionPercentage: 5 },
+    { id: 'COM005', referenceMonth: 'Junho/2024', recipientName: 'Hugo Costa', recipientType: 'Mensageiro' as const, baseAmount: 0, commissionRate: 3, commissionAmount: 0, status: 'Paga' as const, paymentDate: '2024-07-05' },
+    { id: 'COM006', referenceMonth: 'Junho/2024', recipientName: 'Ana Beatriz', recipientType: 'Assessor' as const, goal: 18000, baseAmount: 20000, commissionRate: 5.5, commissionAmount: 1100, status: 'Paga' as const, paymentDate: '2024-07-05', newClientsGoal: 12, newClientsResult: 10, minCommissionPercentage: 3.5, maxCommissionPercentage: 5.5 },
 ];
 
 const allCollaborators = [
@@ -110,6 +111,7 @@ export default function RelatoriosPage() {
     
     const totalValue = commissionsInPeriod.reduce((sum, c) => sum + c.baseAmount, 0);
     const totalCommission = commissionsInPeriod.reduce((sum, c) => sum + c.commissionAmount, 0);
+    const totalNewClients = commissionsInPeriod.reduce((sum, c) => sum + (c.newClientsResult || 0), 0);
     
     // Chart Data
     if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData && fullCollaboratorData.goal > 0) {
@@ -132,28 +134,38 @@ export default function RelatoriosPage() {
     doc.setFontSize(11);
     doc.text(`Período: ${format(data.dateRange.from, 'dd/MM/yyyy')} a ${format(data.dateRange.to, 'dd/MM/yyyy')}`, 14, 30);
     
-    autoTable(doc, {
-      startY: 40,
-      head: [['Colaborador', 'Função', 'Meta']],
-      body: [
-        [
-            collaborator.name, 
-            collaborator.type, 
-            'goal' in fullCollaboratorData ? formatCurrency(fullCollaboratorData.goal ?? 0) : 'N/A'
-        ]
-      ],
-      theme: 'striped',
-    });
+    if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData) {
+        autoTable(doc, {
+            startY: 40,
+            head: [['Colaborador', 'Função', 'Meta (R$)', 'Meta (Clientes)']],
+            body: [[
+                collaborator.name, 
+                collaborator.type, 
+                formatCurrency(fullCollaboratorData.goal ?? 0),
+                fullCollaboratorData.newClientsGoal ?? 'N/A'
+            ]],
+            theme: 'striped',
+        });
+    } else {
+         autoTable(doc, {
+            startY: 40,
+            head: [['Colaborador', 'Função']],
+            body: [[ collaborator.name, collaborator.type ]],
+            theme: 'striped',
+        });
+    }
+
 
     const finalY = (doc as any).lastAutoTable.finalY;
 
     autoTable(doc, {
       startY: finalY + 10,
-      head: [['Data Pag.', 'Valor Base', 'Comissão']],
+      head: [['Data Pag.', 'Valor Base', 'Comissão', 'Taxa Aplicada']],
       body: commissionsInPeriod.map(c => [
         c.paymentDate ? format(new Date(c.paymentDate), 'dd/MM/yyyy', { timeZone: 'UTC' }) : '-',
         formatCurrency(c.baseAmount),
-        formatCurrency(c.commissionAmount)
+        formatCurrency(c.commissionAmount),
+        `${c.commissionRate.toFixed(1)}%`
       ]),
       theme: 'striped',
     });
@@ -167,15 +179,14 @@ export default function RelatoriosPage() {
 
     if (collaborator.type === 'Assessor' && 'goal' in fullCollaboratorData && fullCollaboratorData.goal > 0) {
         const goal = fullCollaboratorData.goal;
+        const goalMet = totalValue >= goal;
         const achievement = (totalValue / goal) * 100;
-        summaryText += `\nMeta Mensal: ${formatCurrency(goal)}`;
-        summaryText += `\nDesempenho da Meta: ${achievement.toFixed(2)}%`;
-
-        if (achievement < 100) {
-            summaryText += ` (Faltou ${formatCurrency(goal - totalValue)} para atingir a meta)`;
-        } else {
-            summaryText += ` (Superou a meta em ${formatCurrency(totalValue - goal)})`;
-        }
+        const appliedCommission = goalMet ? fullCollaboratorData.maxCommissionPercentage : fullCollaboratorData.minCommissionPercentage;
+        
+        summaryText += `\nResultado (Clientes): ${totalNewClients} / ${fullCollaboratorData.newClientsGoal}`;
+        summaryText += `\n\nMeta Arrecadação: ${formatCurrency(goal)}`;
+        summaryText += `\nDesempenho da Meta: ${achievement.toFixed(2)}% (${goalMet ? 'Atingida' : 'Não Atingida'})`;
+        summaryText += `\nComissão Aplicada: ${appliedCommission?.toFixed(1)}% (${goalMet ? 'Máxima' : 'Mínima'})`;
     }
 
     doc.text(summaryText, 14, finalY2 + 22);

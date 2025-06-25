@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Badge } from '@/components/ui/badge';
 import { cn } from "@/lib/utils";
 
 const viewCommissionSchema = z.object({
@@ -63,7 +63,10 @@ export function ViewCommissionDialog({ open, onOpenChange, commission }: { open:
   }
 
   if (!commission) return null;
+  
   const isPaid = form.watch('status') === 'Paga';
+  const isAssessor = commission.recipientType === 'Assessor';
+  const goalMet = isAssessor && commission.goal && commission.baseAmount >= commission.goal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,21 +87,47 @@ export function ViewCommissionDialog({ open, onOpenChange, commission }: { open:
             <span className="text-muted-foreground">Mês de Referência:</span>
             <span className="font-semibold text-right">{commission.referenceMonth}</span>
           </div>
-          {commission.goal && (
+          
+           {isAssessor ? (
+            <>
+                <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
+                    <span className="text-muted-foreground">Meta (Arrecadação):</span>
+                    <span className="font-semibold text-right">{formatCurrency(commission.goal)}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Resultado (Arrecadação):</span>
+                     <span className={`font-semibold text-right`}>
+                        {formatCurrency(commission.baseAmount)}
+                    </span>
+                </div>
+                 <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Meta (Novos Clientes):</span>
+                    <span className="font-semibold text-right">{commission.newClientsGoal}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Resultado (Novos Clientes):</span>
+                    <span className="font-semibold text-right">{commission.newClientsResult}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Comissão (Min/Máx):</span>
+                    <span className="font-semibold text-right">{commission.minCommissionPercentage}% / {commission.maxCommissionPercentage}%</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <span className="text-muted-foreground">Taxa Aplicada:</span>
+                    <span className="font-semibold text-right flex items-center justify-end gap-2">
+                        {commission.commissionRate.toFixed(1)}%
+                        <Badge variant={goalMet ? 'default' : 'destructive'}>{goalMet ? 'Máxima' : 'Mínima'}</Badge>
+                    </span>
+                </div>
+            </>
+           ) : (
             <div className="grid grid-cols-2 gap-2">
-              <span className="text-muted-foreground">Meta:</span>
-              <span className="font-semibold text-right">{formatCurrency(commission.goal)}</span>
+              <span className="text-muted-foreground">Valor Base:</span>
+              <span className="font-semibold text-right">{formatCurrency(commission.baseAmount)}</span>
             </div>
-          )}
-          <div className="grid grid-cols-2 gap-2">
-            <span className="text-muted-foreground">Valor Base:</span>
-            <span className="font-semibold text-right">{formatCurrency(commission.baseAmount)}</span>
-          </div>
-           <div className="grid grid-cols-2 gap-2">
-            <span className="text-muted-foreground">Taxa:</span>
-            <span className="font-semibold text-right">{commission.commissionRate.toFixed(1)}%</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+           )}
+
+          <div className="grid grid-cols-2 gap-2 border-t pt-2 mt-2">
             <span className="text-muted-foreground">Valor da Comissão:</span>
             <span className="font-semibold text-right">{formatCurrency(commission.commissionAmount)}</span>
           </div>

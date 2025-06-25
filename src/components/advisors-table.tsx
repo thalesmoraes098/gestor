@@ -26,8 +26,10 @@ type Advisor = {
   name: string;
   email: string;
   phone: string;
-  commissionPercentage: number;
+  minCommissionPercentage: number;
+  maxCommissionPercentage: number;
   goal: number;
+  newClientsGoal: number;
   status: 'Ativo' | 'Férias' | 'Licença Médica' | 'Suspensão' | 'Demitido';
 };
 
@@ -54,9 +56,9 @@ export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advi
           <TableHead>Nome</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="hidden md:table-cell">E-mail</TableHead>
-          <TableHead className="hidden sm:table-cell">Telefone</TableHead>
-          <TableHead className="text-right">Meta</TableHead>
-          <TableHead className="text-right">Comissão (%)</TableHead>
+          <TableHead className="text-right">Meta (R$)</TableHead>
+          <TableHead className="text-right hidden lg:table-cell">Meta (Clientes)</TableHead>
+          <TableHead className="text-right">Comissão (Min/Máx %)</TableHead>
           <TableHead>
             <span className="sr-only">Ações</span>
           </TableHead>
@@ -77,9 +79,9 @@ export function AdvisorsTable({ data, onEdit }: { data: Advisor[]; onEdit: (advi
               </Badge>
             </TableCell>
             <TableCell className="hidden md:table-cell">{advisor.email}</TableCell>
-            <TableCell className="hidden sm:table-cell">{advisor.phone}</TableCell>
             <TableCell className="text-right font-medium">{formatCurrency(advisor.goal)}</TableCell>
-            <TableCell className="text-right font-medium">{advisor.commissionPercentage.toFixed(1)}%</TableCell>
+            <TableCell className="text-right font-medium hidden lg:table-cell">{advisor.newClientsGoal}</TableCell>
+            <TableCell className="text-right font-medium">{`${advisor.minCommissionPercentage.toFixed(1)}% / ${advisor.maxCommissionPercentage.toFixed(1)}%`}</TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

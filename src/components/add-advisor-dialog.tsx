@@ -17,9 +17,15 @@ const addAdvisorSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
   phone: z.string().min(1, { message: 'O telefone é obrigatório.' }),
   goal: z.coerce.number().min(0, { message: 'A meta não pode ser negativa.' }),
-  commissionPercentage: z.coerce.number().min(0, { message: 'A comissão não pode ser negativa.' }).max(100, { message: 'A comissão não pode ser maior que 100.' }),
+  newClientsGoal: z.coerce.number().min(0, { message: 'A meta de clientes não pode ser negativa.' }),
+  minCommissionPercentage: z.coerce.number().min(0, { message: 'A comissão não pode ser negativa.' }).max(100, { message: 'A comissão não pode ser maior que 100.' }),
+  maxCommissionPercentage: z.coerce.number().min(0, { message: 'A comissão não pode ser negativa.' }).max(100, { message: 'A comissão não pode ser maior que 100.' }),
   status: z.enum(['Ativo', 'Férias', 'Licença Médica', 'Suspensão', 'Demitido']),
+}).refine(data => data.maxCommissionPercentage >= data.minCommissionPercentage, {
+    message: "A comissão máxima deve ser maior ou igual à mínima.",
+    path: ["maxCommissionPercentage"],
 });
+
 
 type AddAdvisorFormValues = z.infer<typeof addAdvisorSchema>;
 
@@ -28,7 +34,9 @@ const defaultFormValues: AddAdvisorFormValues = {
   email: '',
   phone: '',
   goal: 0,
-  commissionPercentage: 0,
+  newClientsGoal: 0,
+  minCommissionPercentage: 0,
+  maxCommissionPercentage: 0,
   status: 'Ativo',
 };
 
@@ -58,7 +66,9 @@ export function AddAdvisorDialog({
           email: advisor.email || '',
           phone: advisor.phone || '',
           goal: advisor.goal || 0,
-          commissionPercentage: advisor.commissionPercentage || 0,
+          newClientsGoal: advisor.newClientsGoal || 0,
+          minCommissionPercentage: advisor.minCommissionPercentage || 0,
+          maxCommissionPercentage: advisor.maxCommissionPercentage || 0,
           status: advisor.status || 'Ativo',
         });
       } else {
@@ -120,14 +130,31 @@ export function AddAdvisorDialog({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="goal" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Meta (R$)</FormLabel>
+                            <FormLabel>Meta de Arrecadação (R$)</FormLabel>
                             <FormControl><Input type="number" placeholder="15000.00" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
                     )}/>
-                    <FormField control={form.control} name="commissionPercentage" render={({ field }) => (
+                    <FormField control={form.control} name="newClientsGoal" render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Comissão (%)</FormLabel>
+                            <FormLabel>Meta de Novos Clientes</FormLabel>
+                            <FormControl><Input type="number" placeholder="10" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="minCommissionPercentage" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Comissão Mínima (%)</FormLabel>
+                            <FormControl><Input type="number" placeholder="3.0" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                     <FormField control={form.control} name="maxCommissionPercentage" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Comissão Máxima (%)</FormLabel>
                             <FormControl><Input type="number" placeholder="5.0" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>

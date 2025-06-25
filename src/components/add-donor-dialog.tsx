@@ -131,7 +131,11 @@ export function AddDonorDialog({
   const isLoyal = form.watch('isLoyal');
 
   const onSubmit = (data: AddDonorFormValues) => {
-    console.log(isEditMode ? 'Dados do doador atualizados:' : 'Dados do novo doador:', data);
+    const finalData = { ...data };
+    if (!isEditMode && !finalData.code) {
+      finalData.code = Math.floor(100000 + Math.random() * 900000).toString();
+    }
+    console.log(isEditMode ? 'Dados do doador atualizados:' : 'Dados do novo doador:', finalData);
     onOpenChange(false);
   };
   

@@ -39,6 +39,7 @@ type Donation = {
 
 type Donor = {
   id: string;
+  code: string;
   name: string;
   email: string;
   status: 'Ativo' | 'Inativo' | 'Pendente';
@@ -97,7 +98,7 @@ export function DonorsTable({ data, onEdit }: { data: any[]; onEdit: (donor: any
         <TableBody>
           {data.map((donor) => (
             <TableRow key={donor.id}>
-              <TableCell className="font-mono text-sm text-muted-foreground">{donor.id}</TableCell>
+              <TableCell className="font-mono text-sm text-muted-foreground">{donor.code}</TableCell>
               <TableCell>
                 <div className="font-medium">{donor.name}</div>
                 <div className="text-sm text-muted-foreground md:hidden">

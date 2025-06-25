@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -13,6 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { auth, db } from '@/lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 const settingsSchema = z.object({
   closingDay: z.string().min(1, { message: 'Por favor, selecione um dia.' }),
@@ -36,15 +39,11 @@ type User = {
     role: 'Admin' | 'Usuário';
 };
 
-const initialUsers: User[] = [
-    { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin' },
-    { id: 'user-1', name: 'Usuário Padrão', email: 'user@email.com', role: 'Usuário' },
-];
-
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [currentClosingDay, setCurrentClosingDay] = useState(savedClosingDay);
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
   const settingsForm = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
@@ -62,6 +61,29 @@ export default function ConfiguracoesPage() {
     },
   });
 
+  const fetchUsers = async () => {
+    try {
+        setLoadingUsers(true);
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const usersList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersList);
+    } catch (error) {
+        console.error("Error fetching users: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao buscar usuários",
+            description: "Não foi possível carregar a lista de usuários.",
+        });
+    } finally {
+        setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+
   const onSettingsSubmit = (data: SettingsFormValues) => {
     savedClosingDay = data.closingDay;
     setCurrentClosingDay(data.closingDay);
@@ -71,19 +93,33 @@ export default function ConfiguracoesPage() {
     });
   };
 
-  const onNewUserSubmit = (data: NewUserFormValues) => {
-    const newUser: User = {
-        id: `user-${users.length + 1}`,
-        name: data.name,
-        email: data.email,
-        role: 'Usuário',
-    };
-    setUsers(prevUsers => [...prevUsers, newUser]);
-    toast({
-        title: 'Usuário Adicionado',
-        description: `O usuário ${data.name} foi criado com sucesso.`
-    });
-    newUserForm.reset();
+  const onNewUserSubmit = async (data: NewUserFormValues) => {
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const newUser = userCredential.user;
+
+        await setDoc(doc(db, "users", newUser.uid), {
+            uid: newUser.uid,
+            name: data.name,
+            email: data.email,
+            role: 'Usuário',
+            photoUrl: ''
+        });
+        
+        toast({
+            title: 'Usuário Adicionado',
+            description: `O usuário ${data.name} foi criado com sucesso.`
+        });
+        newUserForm.reset();
+        fetchUsers(); // Refresh the list
+    } catch (error: any) {
+        console.error("Error creating user:", error);
+        toast({
+            variant: "destructive",
+            title: 'Erro ao criar usuário',
+            description: error.message,
+        });
+    }
   };
 
   return (
@@ -190,7 +226,9 @@ export default function ConfiguracoesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map((user) => (
+                      {loadingUsers ? (
+                        <TableRow><TableCell colSpan={3} className="text-center">Carregando...</TableCell></TableRow>
+                      ) : users.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.name}</TableCell>
                           <TableCell>{user.email}</TableCell>

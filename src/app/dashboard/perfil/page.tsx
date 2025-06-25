@@ -11,7 +11,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { getLoggedInUser, setLoggedInUser, type User } from '@/lib/session';
+import { auth, db, storage } from '@/lib/firebase';
+import { onAuthStateChanged, updateProfile, type User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 const profileSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
@@ -24,7 +27,8 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function PerfilPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -36,30 +40,78 @@ export default function PerfilPage() {
   });
 
   useEffect(() => {
-    const currentUser = getLoggedInUser();
-    setUser(currentUser);
-    if (currentUser) {
-      form.reset({
-        name: currentUser.name,
-        email: currentUser.email,
-        photoUrl: currentUser.photoUrl || '',
-      });
-    }
-  }, [form]);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        // Fetch additional data from Firestore if needed
+        const userDocRef = doc(db, 'users', currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            form.reset({
+                name: currentUser.displayName || userData.name,
+                email: currentUser.email || '',
+                photoUrl: currentUser.photoURL || userData.photoUrl || '',
+            });
+        }
+      } else {
+        router.push('/login');
+      }
+      setLoading(false);
+    });
 
-  const onSubmit = (data: ProfileFormValues) => {
-    if (user) {
-      const updatedUser = { ...user, ...data };
-      setLoggedInUser(updatedUser);
-      setUser(updatedUser); // Update local state to reflect changes immediately
-      toast({
-        title: 'Perfil Atualizado',
-        description: 'Suas informações foram salvas com sucesso.',
-      });
-      // Force a reload of the layout by navigating
-      router.refresh();
+    return () => unsubscribe();
+  }, [form, router]);
+
+
+  const onSubmit = async (data: ProfileFormValues) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Nenhum usuário autenticado.' });
+        return;
+    }
+
+    try {
+        let photoURL = user.photoURL || '';
+
+        // Check if a new photo was uploaded
+        if (data.photoUrl && data.photoUrl.startsWith('data:image')) {
+            const storageRef = ref(storage, `profile-photos/${user.uid}`);
+            const uploadTask = await uploadString(storageRef, data.photoUrl, 'data_url');
+            photoURL = await getDownloadURL(uploadTask.ref);
+        }
+
+        // Update Firebase Auth profile
+        await updateProfile(user, {
+            displayName: data.name,
+            photoURL: photoURL,
+        });
+
+        // Update Firestore document
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+            name: data.name,
+            email: data.email, // Note: updating email in Firestore, not in Auth for simplicity
+            photoUrl: photoURL,
+        });
+
+        toast({
+            title: 'Perfil Atualizado',
+            description: 'Suas informações foram salvas com sucesso.',
+        });
+        router.refresh(); // Refresh to show updated info in layout
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Erro ao atualizar perfil',
+            description: 'Não foi possível salvar as alterações.',
+        });
     }
   };
+
+  if (loading) {
+      return <div className="text-center p-10">Carregando perfil...</div>;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,8 +137,8 @@ export default function PerfilPage() {
                     <FormItem>
                         <div className="flex items-center gap-6">
                             <Avatar className="h-20 w-20">
-                                <AvatarImage src={field.value || 'https://placehold.co/80x80.png'} alt={user?.name || 'User'} data-ai-hint="person" />
-                                <AvatarFallback>{user?.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                                <AvatarImage src={field.value || 'https://placehold.co/80x80.png'} alt={user?.displayName || 'User'} data-ai-hint="person" />
+                                <AvatarFallback>{user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 space-y-2">
                                 <FormLabel>Foto de Perfil</FormLabel>
@@ -140,7 +192,7 @@ export default function PerfilPage() {
                   <FormItem>
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="seu@email.com" {...field} />
+                      <Input type="email" placeholder="seu@email.com" {...field} disabled />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

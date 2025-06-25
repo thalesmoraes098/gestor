@@ -30,7 +30,18 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { getLoggedInUser, setLoggedInUser, type User } from '@/lib/session';
+import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+// Merged User type
+type AppUser = {
+  uid: string;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Usuário';
+  photoUrl?: string;
+};
 
 export default function DashboardLayout({
   children,
@@ -39,11 +50,45 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<AppUser | null>(null);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    setUser(getLoggedInUser());
-  }, [pathname]);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data() as Omit<AppUser, 'uid'>;
+          setUser({
+            uid: firebaseUser.uid,
+            ...userData,
+            name: firebaseUser.displayName || userData.name, // Prefer display name from Auth
+            email: firebaseUser.email || userData.email,
+            photoUrl: firebaseUser.photoURL || userData.photoUrl
+          });
+        } else {
+          // This case might happen if user is created in Auth but not in Firestore.
+          // For now, we sign them out.
+          console.error("User document not found in Firestore.");
+          await signOut(auth);
+          setUser(null);
+          router.push('/login');
+        }
+      } else {
+        // User is signed out
+        setUser(null);
+        router.push('/login');
+      }
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router]);
 
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -55,10 +100,23 @@ export default function DashboardLayout({
     { href: '/dashboard/relatorios', label: 'Relatórios', icon: BarChart },
   ];
   
-  const handleLogout = () => {
-    setLoggedInUser(null);
-    router.push('/login');
+  const handleLogout = async () => {
+    await signOut(auth);
+    // The onAuthStateChanged listener will handle the redirect
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    // This can be a fallback for the redirect, or you can return null
+    return null;
+  }
 
   return (
     <SidebarProvider>

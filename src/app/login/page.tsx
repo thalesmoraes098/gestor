@@ -8,37 +8,39 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from '@/lib/session';
-import { setLoggedInUser } from '@/lib/session';
-
-// Mock user database for login simulation
-const users: (User & { password: string })[] = [
-    { id: 'user-admin', name: 'Admin', email: 'admin@email.com', role: 'Admin', password: 'password', photoUrl: 'https://placehold.co/40x40.png' },
-    { id: 'user-1', name: 'Usuário Padrão', email: 'user@email.com', role: 'Usuário', password: 'password', photoUrl: 'https://placehold.co/40x40.png' },
-];
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const foundUser = users.find(user => user.email === email && user.password === password);
-
-    if (foundUser) {
-      // Exclude password from the stored user object
-      const { password: _, ...userToStore } = foundUser;
-      setLoggedInUser(userToStore);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
-    } else {
+    } catch (error: any) {
+      console.error("Firebase Auth Error:", error);
+      let errorMessage = 'E-mail ou senha incorretos.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Credenciais inválidas. Por favor, verifique seu e-mail e senha.';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'O formato do e-mail ou senha é inválido.';
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Falha no Login',
-        description: 'E-mail ou senha incorretos.',
+        description: errorMessage,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,6 +70,7 @@ export default function LoginPage() {
                 className="bg-primary/10 border-0 focus-visible:ring-primary rounded-lg h-12 text-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
             </div>
             <div className="grid gap-2">
@@ -80,10 +83,11 @@ export default function LoginPage() {
                 className="bg-primary/10 border-0 focus-visible:ring-primary rounded-lg h-12 text-base"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full text-base font-semibold h-12 rounded-lg mt-2">
-              Entrar
+            <Button type="submit" className="w-full text-base font-semibold h-12 rounded-lg mt-2" disabled={isLoading}>
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
         </CardContent>

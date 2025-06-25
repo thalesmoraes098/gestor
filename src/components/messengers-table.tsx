@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil } from 'lucide-react';
 import type { Messenger } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
 
@@ -33,11 +33,9 @@ const statusVariantMap: Record<Messenger['status'], VariantProps<typeof badgeVar
 export function MessengersTable({ 
     data, 
     onEdit,
-    onDelete,
 }: { 
     data: Messenger[]; 
-    onEdit: (messenger: Messenger) => void; 
-    onDelete: (messengerId: string) => void;
+    onEdit: (messenger: Messenger) => void;
 }) {
   return (
     <Table>
@@ -86,10 +84,6 @@ export function MessengersTable({
                   <DropdownMenuItem onSelect={() => onEdit(messenger)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive" onSelect={() => onDelete(messenger.id)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

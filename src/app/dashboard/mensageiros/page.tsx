@@ -9,7 +9,7 @@ import { AddMessengerDialog } from "@/components/add-messenger-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 import type { Messenger } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { collection, doc, addDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,25 +61,6 @@ export default function MensageirosPage() {
     setIsMessengerDialogOpen(true);
   };
 
-  const handleDelete = async (messengerId: string) => {
-    if (window.confirm('Tem certeza de que deseja excluir este mensageiro?')) {
-      try {
-        await deleteDoc(doc(db, "messengers", messengerId));
-        toast({
-          title: 'Mensageiro Excluído',
-          description: 'O mensageiro foi removido com sucesso.',
-        });
-      } catch (error) {
-        console.error("Error deleting messenger: ", error);
-        toast({
-          variant: "destructive",
-          title: 'Erro ao Excluir',
-          description: 'Não foi possível excluir o mensageiro.',
-        });
-      }
-    }
-  };
-  
   const handleSave = async (data: Omit<Messenger, 'id'> & { id?: string }) => {
     setIsMessengerDialogOpen(false);
     const isEditing = !!data.id;
@@ -184,7 +165,7 @@ export default function MensageirosPage() {
                 </Table>
               </div>
             ) : (
-              <MessengersTable data={filteredMessengers} onEdit={handleEdit} onDelete={handleDelete} />
+              <MessengersTable data={filteredMessengers} onEdit={handleEdit} />
             )}
           </CardContent>
         </Card>

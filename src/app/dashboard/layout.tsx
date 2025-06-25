@@ -216,13 +216,12 @@ export default function DashboardLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <div className="relative min-h-screen w-full flex-col">
-            <div className="absolute inset-x-0 top-0 h-[300px] bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 -z-10" />
-            <header className="sticky top-0 z-10 flex h-16 items-center gap-4 bg-transparent px-4 md:px-6">
+        <div className="flex min-h-screen w-full flex-col">
+            <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-4 md:px-6">
                 <SidebarTrigger className="flex md:hidden" />
                 <div className="flex-1" />
                 <div className="flex items-center gap-4">
-                  <Button variant="outline" className="bg-white">Convidar pessoas</Button>
+                  <Button variant="outline">Convidar pessoas</Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
                     <Bell className="h-4 w-4" />
                     <span className="sr-only">Notificações</span>

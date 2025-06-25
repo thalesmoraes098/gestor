@@ -5,7 +5,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/u
 
 const chartConfigBar: ChartConfig = {
   total: {
-    label: "Sales",
+    label: "Vendas",
     color: "hsl(var(--chart-1))",
   },
 }
@@ -53,6 +53,32 @@ export function CommissionTrendChart({ data }: { data: any[] }) {
           <Legend />
           <Line type="monotone" dataKey="commission" stroke="var(--color-commission)" strokeWidth={2} dot={false} />
         </LineChart>
+    </ChartContainer>
+  )
+}
+
+const messengerChartConfig: ChartConfig = {
+  collections: {
+    label: "Coletas",
+    color: "hsl(var(--chart-2))",
+  },
+}
+
+export function MessengerPerformanceChart({ data }: { data: any[] }) {
+  return (
+    <ChartContainer config={messengerChartConfig} className="h-[250px] w-full">
+        <BarChart accessibilityLayer data={data} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="name"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+          />
+          <YAxis />
+          <Tooltip content={<ChartTooltipContent />} />
+          <Bar dataKey="collections" fill="var(--color-collections)" radius={4} />
+        </BarChart>
     </ChartContainer>
   )
 }

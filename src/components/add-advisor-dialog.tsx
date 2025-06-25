@@ -88,8 +88,8 @@ export function AddAdvisorDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <ScrollArea className="h-auto max-h-[60vh]">
-              <div className="grid gap-6 p-6">
+            <ScrollArea className="h-[60vh]">
+              <div className="grid gap-6 py-4 px-2 pr-6">
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nome</FormLabel>

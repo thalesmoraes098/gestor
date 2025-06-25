@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 
 
@@ -24,7 +25,7 @@ const addDonationSchema = z.object({
   dueDate: z.date({ required_error: "A data de vencimento é obrigatória." }),
   paymentDate: z.date().optional(),
   status: z.enum(['Pago', 'Pendente', 'Atrasado', 'Cancelado']),
-  paymentMethod: z.enum(['Dinheiro', 'Cartão de Crédito', 'PIX']),
+  paymentMethod: z.enum(['PIX', 'Transferência Bancária', 'Coleta']),
   assessor: z.string().optional(),
   messenger: z.string().optional(),
 });
@@ -47,13 +48,14 @@ const defaultFormValues: AddDonationFormValues = {
   amount: 0,
   dueDate: new Date(),
   status: 'Pendente',
-  paymentMethod: 'Dinheiro',
+  paymentMethod: 'PIX',
   assessor: '',
   messenger: '',
 };
 
 export function AddDonationDialog({ open, onOpenChange, donation }: { open: boolean; onOpenChange: (open: boolean) => void; donation?: any | null; }) {
   const isEditMode = !!donation;
+  const [isDonorPopoverOpen, setIsDonorPopoverOpen] = useState(false);
 
   const form = useForm<AddDonationFormValues>({
     resolver: zodResolver(addDonationSchema),
@@ -71,7 +73,7 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
           dueDate: donation.dueDate ? new Date(donation.dueDate) : new Date(),
           paymentDate: donation.paymentDate ? new Date(donation.paymentDate) : undefined,
           status: donation.status || 'Pendente',
-          paymentMethod: donation.paymentMethod || 'Dinheiro',
+          paymentMethod: donation.paymentMethod || 'PIX',
           assessor: donation.assessor || '',
           messenger: donation.messenger || '',
         });
@@ -103,18 +105,67 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <ScrollArea className="h-[60vh]">
               <div className="grid gap-6 py-4 px-2 pr-6">
-                <FormField control={form.control} name="donorId" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Doador</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Selecione o doador" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {donors.map((donor) => (<SelectItem key={donor.id} value={donor.id}>{donor.name}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
+                <FormField
+                  control={form.control}
+                  name="donorId"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Doador</FormLabel>
+                      <Popover open={isDonorPopoverOpen} onOpenChange={setIsDonorPopoverOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? donors.find(
+                                    (donor) => donor.id === field.value
+                                  )?.name
+                                : "Selecione o doador"}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar doador por nome ou código..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhum doador encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {donors.map((donor) => (
+                                  <CommandItem
+                                    value={`${donor.name} ${donor.id}`}
+                                    key={donor.id}
+                                    onSelect={() => {
+                                      form.setValue("donorId", donor.id)
+                                      setIsDonorPopoverOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        donor.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {donor.name} ({donor.id})
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField control={form.control} name="amount" render={({ field }) => (
                   <FormItem>
@@ -151,9 +202,9 @@ export function AddDonationDialog({ open, onOpenChange, donation }: { open: bool
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Selecione a forma de pagamento" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                        <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
                         <SelectItem value="PIX">PIX</SelectItem>
+                        <SelectItem value="Transferência Bancária">Transferência Bancária</SelectItem>
+                        <SelectItem value="Coleta">Coleta</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

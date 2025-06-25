@@ -7,7 +7,6 @@ import {
   BarChart,
   Bike,
   Briefcase,
-  Gift,
   HandHeart,
   LayoutDashboard,
   Percent,
@@ -48,6 +47,10 @@ export default function DashboardLayout({
     { href: '/dashboard/relatorios', label: 'Relatórios', icon: BarChart },
   ];
 
+  const settingsMenuItem = { href: '/dashboard/configuracoes', label: 'Configurações', icon: Settings };
+
+  const allNavigationItems = [...menuItems, settingsMenuItem];
+
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon">
@@ -61,18 +64,16 @@ export default function DashboardLayout({
           <SidebarMenu>
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
-                    <a>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </Link>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  tooltip={item.label}
+                >
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -80,18 +81,16 @@ export default function DashboardLayout({
         <SidebarFooter>
           <SidebarMenu>
              <SidebarMenuItem>
-                <Link href="/dashboard/configuracoes" legacyBehavior passHref>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/dashboard/configuracoes'}
-                    tooltip="Configurações"
-                  >
-                    <a>
-                      <Settings />
-                      <span>Configurações</span>
-                    </a>
-                  </SidebarMenuButton>
-                </Link>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === settingsMenuItem.href}
+                  tooltip={settingsMenuItem.label}
+                >
+                  <Link href={settingsMenuItem.href}>
+                    <settingsMenuItem.icon />
+                    <span>{settingsMenuItem.label}</span>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Perfil">
@@ -110,7 +109,7 @@ export default function DashboardLayout({
             <SidebarTrigger className="flex md:hidden"/>
             <div className='flex-1'>
                  <h1 className="text-lg font-semibold md:text-xl">
-                    {menuItems.find(item => item.href === pathname)?.label || 'Configurações' || 'Dashboard'}
+                    {allNavigationItems.find(item => item.href === pathname)?.label ?? 'Dashboard'}
                 </h1>
             </div>
         </header>

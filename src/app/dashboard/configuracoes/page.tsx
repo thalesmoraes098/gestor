@@ -16,14 +16,13 @@ import { auth, db } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
+import { savedClosingDay, setSavedClosingDay } from '@/lib/config';
 
 const settingsSchema = z.object({
   closingDay: z.string().min(1, { message: 'Por favor, selecione um dia.' }),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
-
-export let savedClosingDay = '5'; 
 
 const newUserSchema = z.object({
     name: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres.' }),
@@ -85,7 +84,7 @@ export default function ConfiguracoesPage() {
 
 
   const onSettingsSubmit = (data: SettingsFormValues) => {
-    savedClosingDay = data.closingDay;
+    setSavedClosingDay(data.closingDay);
     setCurrentClosingDay(data.closingDay);
     toast({
       title: 'Configurações Salvas',

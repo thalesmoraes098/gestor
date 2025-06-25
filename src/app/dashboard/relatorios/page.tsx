@@ -18,7 +18,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PerformanceReportChart } from '@/components/dashboard-charts';
-import { savedClosingDay } from '../configuracoes/page';
+import { savedClosingDay } from '@/lib/config';
 import type { Advisor, Messenger, Donation, Commission } from '@/lib/mock-data';
 
 const reportSchema = z.object({

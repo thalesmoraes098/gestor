@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
-  output: 'standalone', // Recommended for App Hosting
+  output: 'standalone',
   images: {
     remotePatterns: [
       {

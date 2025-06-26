@@ -6,16 +6,16 @@
 runConfig:
   env:
     - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-      value: "COLE_SUA_FIREBASE_API_KEY_AQUI"
+      value: "AIzaSyDXErYRopjsMJJ22TC5hTqcfndQEsSachI"
     - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-      value: "COLE_SEU_FIREBASE_AUTH_DOMAIN_AQUI"
+      value: "gestor-juv.firebaseapp.com"
     - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      value: "COLE_SEU_FIREBASE_PROJECT_ID_AQUI"
+      value: "gestor-juv"
     - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-      value: "COLE_SEU_FIREBASE_STORAGE_BUCKET_AQUI"
+      value: "gestor-juv.firebasestorage.app"
     - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-      value: "COLE_SEU_FIREBASE_MESSAGING_SENDER_ID_AQUI"
+      value: "197219784418"
     - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-      value: "COLE_SEU_FIREBASE_APP_ID_AQUI"
+      value: "1:197219784418:web:30513e9f2ed479229830bb"
   # Aumente este valor se desejar mais instâncias para lidar com o tráfego.
   maxInstances: 1

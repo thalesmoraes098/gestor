@@ -1,11 +1,37 @@
 # Gestor Digital
 
-Este é um projeto Next.js para gerenciamento de doações, assessores e comissões.
+## Passos Finais Para Publicação
 
-## Próximos Passos Para Publicação
+O código está pronto. Siga **exatamente** estes três passos para publicar.
 
-Como o back-end anterior foi excluído, o próximo passo é:
+---
 
-1.  **Tente publicar o projeto novamente.** A publicação irá falhar, mas isso criará um novo back-end no Firebase App Hosting.
-2.  **Ajuste as permissões.** Após a falha, vá até o [Secret Manager](https://console.cloud.google.com/security/secret-manager) e conceda ao novo back-end a permissão de **`Acessador de secrets do Secret Manager`** para cada um dos 6 secrets. O nome do principal do novo back-end seguirá o formato `service-SEU_NUMERO_DO_PROJETO@gcp-sa-apphosting.iam.gserviceaccount.com`.
-3.  **Publique mais uma vez.** Após ajustar as permissões, a publicação final funcionará.
+### Passo 1: Iniciar Publicação (Vai falhar)
+
+*   No Firebase, clique para **publicar o projeto**.
+*   **Isto vai falhar.** É esperado. O objetivo é apenas criar um novo back-end.
+
+---
+
+### Passo 2: Conceder Permissão ao Novo Back-end
+
+1.  Na mensagem de erro da publicação que falhou, encontre e copie o nome do **principal**. Ele se parece com:
+    `service-SEU_NUMERO_DO_PROJETO@gcp-sa-apphosting.iam.gserviceaccount.com`
+
+2.  Vá para o **Secret Manager** no Google Cloud: [Clique aqui](https://console.cloud.google.com/security/secret-manager)
+
+3.  Para **CADA UM** dos 6 secrets (`FIREBASE_API_KEY`, etc.):
+    *   Marque a caixa de seleção ao lado do nome do secret.
+    *   No painel à direita, clique em **ADICIONAR PRINCIPAL**.
+    *   Cole o nome do principal que você copiou no campo "Novos principais".
+    *   No campo "Atribuir papel", escolha **Acessador de secrets do Secret Manager**.
+    *   Clique em **SALVAR**.
+
+> **Importante:** Repita o passo 3 para **todos os seis** secrets.
+
+---
+
+### Passo 3: Publicar Novamente (Vai funcionar)
+
+*   Volte para o Firebase e clique para **publicar o projeto** mais uma vez.
+*   Desta vez, a publicação será concluída com sucesso.

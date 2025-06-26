@@ -3,6 +3,7 @@ build:
 run:
   run: npm start
 backend:
+  id: app
   secrets:
     - FIREBASE_API_KEY
     - FIREBASE_AUTH_DOMAIN

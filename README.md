@@ -1,96 +1,68 @@
-# Guia Definitivo para Publicação - SalesVision
+# Guia de Publicação Final e Definitivo
 
-Este guia foi revisado e simplificado para garantir uma publicação sem erros. Siga **apenas** estes passos, na ordem exata.
-
----
-
-### **Contexto do Erro: Permissão de Faturamento vs. Permissão de Projeto**
-
-O erro "você não tem autorização" acontece porque são necessárias **duas permissões diferentes**:
-1.  **Permissão de Faturamento:** Para autorizar o Google a cobrar pelos serviços.
-2.  **Permissão de Projeto:** Para autorizar sua conta a criar e gerenciar recursos (como o servidor do App Hosting) *dentro* do projeto.
-
-Você já tem a permissão de faturamento, mas a de projeto está faltando.
+Peço as mais sinceras desculpas. O erro fundamental foi meu: as instruções anteriores mencionavam um nome de projeto incorreto. O projeto correto é **`juv-comissoes`**. Este guia foi feito para ele. Siga apenas estes passos.
 
 ---
 
-### **Passo 1: Conceder Permissão de Proprietário do Projeto (Ação do Administrador)**
+### **Passo 1: Configure o Projeto Correto no Terminal**
 
-O proprietário do projeto Google Cloud precisa conceder a permissão de `Proprietário` (Owner) à sua conta de usuário.
+Vamos garantir que seu terminal está apontado para o projeto certo, `juv-comissoes`.
 
-**Instruções para o Administrador:**
-
-1.  Acesse a página de **IAM e Administração** do Google Cloud Console:
-    [https://console.cloud.google.com/iam-admin/iam](https://console.cloud.google.com/iam-admin/iam)
-
-2.  No topo da página, certifique-se de que o projeto **`gestor-digital-4e554`** está selecionado.
-
-3.  Clique no botão **"CONCEDER ACESSO"** (ou "GRANT ACCESS").
-
-4.  No campo **"Novos principais"**, insira o endereço de e-mail do usuário que está tentando publicar (neste caso, `thalesmoraesadv@gmail.com`).
-
-5.  No campo **"Atribuir papéis"**, selecione o papel **`Proprietário`** (em inglês: `Owner`). Este papel concede todas as permissões necessárias para gerenciar o projeto.
-
-6.  Clique em **"SALVAR"**.
-
-> **Nota:** Pode levar alguns minutos para a permissão ser totalmente propagada pelo sistema do Google.
-
----
-
-### **Passo 2: Habilitar os Serviços no Firebase (Ação do Desenvolvedor)**
-
-Agora que você tem a permissão correta, volte para a página do **Firebase App Hosting**.
-
-1.  Atualize a página.
-2.  Clique no botão azul **"Configurar serviços"**. O erro de permissão não deve mais aparecer.
-
----
-
-### **Passo 3: Executar o Deploy (Ação do Desenvolvedor)**
-
-Com as permissões corretas e os serviços configurados, o próximo passo é executar o comando de deploy no terminal.
-
-1.  Primeiro, faça login com a conta correta no terminal:
+1.  No terminal, execute o comando para listar seus projetos e confirmar que `juv-comissoes` aparece na lista:
     ```bash
-    firebase login
+    firebase projects:list
     ```
-    (Certifique-se de escolher a conta `thalesmoraesadv@gmail.com` no navegador).
 
-2.  Execute o deploy:
+2.  Agora, trave o terminal para usar apenas o projeto correto com este comando:
+    ```bash
+    firebase use juv-comissoes
+    ```
+    Isso elimina qualquer ambiguidade sobre onde estamos publicando.
+
+---
+
+### **Passo 2: Primeira Tentativa de Deploy (A Falha Esperada)**
+
+Com o projeto correto selecionado, vamos tentar publicar. **Este passo vai falhar, e isso é o esperado.** O objetivo é fazer o Firebase criar a "conta de serviço" do seu back-end.
+
+1.  Execute o deploy:
     ```bash
     firebase deploy --only apphosting
     ```
-    **Importante:** A primeira vez que você executar este comando, **ele provavelmente vai falhar** com um erro sobre permissão para acessar "secrets". Isso é esperado. O objetivo é fazer com que o Firebase crie a conta de serviço do back-end.
+
+2.  Aguarde a mensagem de erro. Ela será parecida com:
+    `"The caller does not have permission to access secret [...] on project juv-comissoes. Please grant 'secretmanager.secretAccessor' permission to the principal 'service-PROJECT_NUMBER@gcp-sa-apphosting.iam.gserviceaccount.com'"`
+
+3.  **Copie o e-mail do `principal`** que aparece na sua mensagem de erro. Ele será algo como `service-XXXXXXXX@gcp-sa-apphosting.iam.gserviceaccount.com`.
 
 ---
 
-### **Passo 4: Conceder Permissão aos Secrets (Ação do Administrador)**
+### **Passo 3: Conceder a Permissão Final (Ação do Proprietário)**
 
-A falha no passo anterior cria uma conta de serviço. Agora, o administrador precisa dar a essa conta permissão para ler os secrets.
-
-**Instruções para o Administrador:**
+Agora, vamos dar a essa conta de serviço a permissão que ela precisa.
 
 1.  Acesse o **Secret Manager** no Google Cloud Console:
     [https://console.cloud.google.com/security/secret-manager](https://console.cloud.google.com/security/secret-manager)
 
-2.  Na mensagem de erro do deploy, encontre o nome da **conta de serviço**. Será algo como: `service-PROJECT_NUMBER@gcp-sa-apphosting.iam.gserviceaccount.com`.
+2.  Certifique-se de que o projeto **`juv-comissoes`** está selecionado no topo da página.
 
-3.  Para **cada um dos 6 secrets** (`FIREBASE_API_KEY`, etc.), faça o seguinte:
+3.  Você verá uma lista de "secrets" (`FIREBASE_API_KEY`, etc.). Para **cada um dos 6 secrets**, faça o seguinte:
     *   Clique no nome do secret.
     *   Vá para a aba **PERMISSÕES**.
     *   Clique em **"CONCEDER ACESSO"**.
-    *   Em **"Novos principais"**, cole o nome completo da conta de serviço.
+    *   Em **"Novos principais"**, cole o nome completo da conta de serviço que você copiou no passo anterior.
     *   Em **"Atribuir papéis"**, selecione o papel **`Acessador de secrets do Secret Manager`** (`Secret Manager Secret Accessor`).
     *   Clique em **"SALVAR"**.
 
 ---
 
-### **Passo 5: Executar o Deploy Novamente (Ação do Desenvolvedor)**
+### **Passo 4: O Deploy Final (O Sucesso)**
 
-Agora que tudo está configurado, execute o comando de deploy mais uma vez:
+Com a permissão concedida, o back-end agora pode ler os secrets. A publicação vai funcionar.
 
-```bash
-firebase deploy --only apphosting
-```
+1.  Execute o comando de deploy mais uma vez:
+    ```bash
+    firebase deploy --only apphosting
+    ```
 
-Desta vez, a publicação será concluída com sucesso.
+Desta vez, a publicação será concluída com sucesso. Agradeço imensamente sua paciência e lamento por todo este processo.

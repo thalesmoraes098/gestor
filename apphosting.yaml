@@ -1,9 +1,11 @@
 build:
-  run: npm install && npm run build
+  run: 'npm install && npm run build'
 run:
-  run: npm start
+  run: 'npm start'
 backend:
   id: app
+  region: us-central1
+  instanceSize: small
   secrets:
     - FIREBASE_API_KEY
     - FIREBASE_AUTH_DOMAIN

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessengersTable } from "@/components/messengers-table";
@@ -9,43 +9,23 @@ import { AddMessengerDialog } from "@/components/add-messenger-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 import type { Messenger } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { collection, doc, addDoc, updateDoc, onSnapshot } from "firebase/firestore";
-import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { messengers as mockMessengers } from "@/lib/mock-data";
 
 export default function MensageirosPage() {
   const { toast } = useToast();
-  const [messengers, setMessengers] = useState<Messenger[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [messengers, setMessengers] = useState<Messenger[]>(mockMessengers);
   const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMessengerDialogOpen, setIsMessengerDialogOpen] = useState(false);
   const [messengerToEdit, setMessengerToEdit] = useState<Messenger | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = onSnapshot(collection(db, "messengers"), (querySnapshot) => {
-      const messengersData: Messenger[] = [];
-      querySnapshot.forEach((doc) => {
-        messengersData.push({ id: doc.id, ...doc.data() } as Messenger);
-      });
-      setMessengers(messengersData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const filteredMessengers = useMemo(() => {
-    if (loading) return [];
     return messengers.filter(messenger => {
       if (filters.status === 'todos') return true;
       return messenger.status.toLowerCase() === filters.status;
     });
-  }, [messengers, filters, loading]);
+  }, [messengers, filters]);
 
   const handleApplyFilters = (newFilters: FilterFormValues) => {
     setFilters(newFilters);
@@ -66,29 +46,17 @@ export default function MensageirosPage() {
     const isEditing = !!data.id;
 
     try {
-      let photoURL = data.photoUrl || (isEditing ? messengerToEdit?.photoUrl : '') || '';
-
-      if (data.photoUrl && data.photoUrl.startsWith('data:image')) {
-        const photoId = data.id || `messenger_${Date.now()}`;
-        const storageRef = ref(storage, `messenger-photos/${photoId}`);
-        const uploadResult = await uploadString(storageRef, data.photoUrl, 'data_url');
-        photoURL = await getDownloadURL(uploadResult.ref);
-      }
-      
-      const messengerData: any = { ...data, photoUrl: photoURL };
-
+      const messengerData: any = { ...data };
       if (!messengerData.receivesCommission) {
         messengerData.commissionPercentage = undefined;
       }
 
       if (isEditing) {
-        const messengerId = data.id!;
-        const { id, ...dataToUpdate } = messengerData;
-        await updateDoc(doc(db, "messengers", messengerId), dataToUpdate);
+        setMessengers(messengers.map(m => m.id === data.id ? { ...m, ...messengerData } : m));
         toast({ title: 'Mensageiro Atualizado', description: 'Os dados do mensageiro foram atualizados.' });
       } else {
-        const { id, ...dataToCreate } = messengerData;
-        await addDoc(collection(db, "messengers"), dataToCreate);
+        const newMessenger = { ...messengerData, id: `msg_${Date.now()}` };
+        setMessengers([...messengers, newMessenger]);
         toast({ title: 'Mensageiro Adicionado', description: 'O novo mensageiro foi registrado com sucesso.' });
       }
     } catch (error) {
@@ -99,6 +67,7 @@ export default function MensageirosPage() {
           description: 'Não foi possível salvar os dados do mensageiro.',
         });
     }
+    setMessengerToEdit(null);
   };
 
   const handleDialogChange = (open: boolean) => {
@@ -137,36 +106,7 @@ export default function MensageirosPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-            {loading ? (
-              <div className="p-4">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
-                            <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
-                            <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[200px]" /></TableHead>
-                            <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[120px]" /></TableHead>
-                            <TableHead className="text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
-                            <TableHead><span className="sr-only">Ações</span></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {[...Array(5)].map((_, i) => (
-                            <TableRow key={i}>
-                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                                <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <MessengersTable data={filteredMessengers} onEdit={handleEdit} />
-            )}
+            <MessengersTable data={filteredMessengers} onEdit={handleEdit} />
           </CardContent>
         </Card>
       </div>

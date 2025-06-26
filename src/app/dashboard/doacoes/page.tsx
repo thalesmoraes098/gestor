@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonationsTable } from "@/components/donations-table";
@@ -9,76 +9,29 @@ import { AddDonationDialog } from "@/components/add-donation-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 import type { Donation } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { collection, onSnapshot, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  donations as mockDonations, 
+  donors as mockDonors, 
+  advisors as mockAdvisors, 
+  messengers as mockMessengers 
+} from "@/lib/mock-data";
 
 type DonorOption = { id: string; name: string; code: string; assessor?: string; };
 type CollaboratorOption = { name: string };
 
 export default function DoacoesPage() {
   const { toast } = useToast();
-  const [donations, setDonations] = useState<Donation[]>([]);
-  const [advisors, setAdvisors] = useState<CollaboratorOption[]>([]);
-  const [messengers, setMessengers] = useState<CollaboratorOption[]>([]);
-  const [donors, setDonors] = useState<DonorOption[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const [donations, setDonations] = useState<Donation[]>(mockDonations);
+  const [advisors, setAdvisors] = useState<CollaboratorOption[]>(mockAdvisors);
+  const [messengers, setMessengers] = useState<CollaboratorOption[]>(mockMessengers);
+  const [donors, setDonors] = useState<DonorOption[]>(mockDonors);
+  
   const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
   const [donationToEdit, setDonationToEdit] = useState<Donation | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-
-    const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
-        const data: Donation[] = [];
-        snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() } as Donation));
-        setDonations(data);
-        setLoading(false);
-    });
-
-    const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
-        const data: CollaboratorOption[] = [];
-        snapshot.forEach((doc) => {
-            if (doc.data().status === 'Ativo') {
-                data.push({ name: doc.data().name });
-            }
-        });
-        setAdvisors(data);
-    });
-
-    const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
-        const data: CollaboratorOption[] = [];
-        snapshot.forEach((doc) => {
-            if (doc.data().status === 'Ativo') {
-                data.push({ name: doc.data().name });
-            }
-        });
-        setMessengers(data);
-    });
-
-    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
-        const data: DonorOption[] = [];
-        snapshot.forEach((doc) => {
-            const donorData = doc.data();
-            data.push({ id: doc.id, name: donorData.name, code: donorData.code, assessor: donorData.assessor });
-        });
-        setDonors(data);
-    });
-
-    return () => {
-        unsubDonations();
-        unsubAdvisors();
-        unsubMessengers();
-        unsubDonors();
-    };
-  }, []);
-
   const filteredDonations = useMemo(() => {
-    if (loading) return [];
     return donations.filter(donation => {
       let matches = true;
       if (filters.status && filters.status !== 'todos') {
@@ -106,7 +59,7 @@ export default function DoacoesPage() {
       }
       return matches;
     });
-  }, [donations, filters, loading]);
+  }, [donations, filters]);
 
   const handleApplyFilters = (newFilters: FilterFormValues) => {
     setFilters(newFilters);
@@ -124,20 +77,11 @@ export default function DoacoesPage() {
 
   const handleDelete = async (donationId: string) => {
     if (window.confirm('Tem certeza de que deseja excluir esta doação?')) {
-        try {
-            await deleteDoc(doc(db, "donations", donationId));
-            toast({
-                title: 'Doação Excluída',
-                description: 'A doação foi removida com sucesso.',
-            });
-        } catch (error) {
-            console.error("Error deleting donation: ", error);
-            toast({
-              variant: "destructive",
-              title: 'Erro ao Excluir',
-              description: 'Não foi possível excluir a doação.',
-            });
-        }
+        setDonations(donations.filter(d => d.id !== donationId));
+        toast({
+            title: 'Doação Excluída',
+            description: 'A doação foi removida com sucesso.',
+        });
     }
   };
   
@@ -147,31 +91,13 @@ export default function DoacoesPage() {
 
     try {
         if (isEditing) {
-            const donationId = data.id!;
-            const { id, ...dataToUpdate } = data;
-            await updateDoc(doc(db, "donations", donationId), dataToUpdate);
+            setDonations(donations.map(d => d.id === data.id ? { ...d, ...data } : d));
             toast({ title: 'Doação Atualizada', description: 'Os dados da doação foram atualizados.' });
         } else {
-            const { id, ...dataToCreate } = data;
-            await addDoc(collection(db, "donations"), dataToCreate);
+            const newDonation = { ...data, id: `don_${Date.now()}`};
+            setDonations([...donations, newDonation]);
             toast({ title: 'Doação Adicionada', description: 'A nova doação foi registrada com sucesso.' });
         }
-
-        if (data.donorId) {
-            const donorRef = doc(db, "donors", data.donorId);
-            const updates: { [key: string]: any } = {
-                // Sempre atualiza o assessor do doador para o da última doação registrada
-                assessor: data.assessor || ''
-            };
-
-            if (data.status === 'Pago') {
-                updates.amount = data.amount; // Atualiza o valor da última doação
-                updates.status = 'Ativo'; // Um doador que paga é considerado ativo
-            }
-            
-            await updateDoc(donorRef, updates);
-        }
-
     } catch (error) {
         console.error("Error saving donation: ", error);
         toast({
@@ -221,42 +147,7 @@ export default function DoacoesPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-             {loading ? (
-              <div className="p-4">
-                <Table>
-                  <TableHeader>
-                      <TableRow>
-                          <TableHead className="w-[120px]"><Skeleton className="h-5 w-full" /></TableHead>
-                          <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
-                          <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
-                          <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
-                          <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
-                          <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
-                          <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
-                          <TableHead className="text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
-                          <TableHead><span className="sr-only">Ações</span></TableHead>
-                      </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                      {[...Array(5)].map((_, i) => (
-                          <TableRow key={i}>
-                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
-                          </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <DonationsTable data={filteredDonations} onEdit={handleEdit} onDelete={handleDelete} />
-            )}
+            <DonationsTable data={filteredDonations} onEdit={handleEdit} onDelete={handleDelete} />
           </CardContent>
         </Card>
       </div>

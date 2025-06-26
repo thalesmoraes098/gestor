@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { Download, ChevronsUpDown, Check } from 'lucide-react';
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +16,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { PerformanceReportChart } from '@/components/dashboard-charts';
+import { 
+  donations as mockDonations,
+  donors as mockDonors,
+  advisors as mockAdvisors,
+  messengers as mockMessengers,
+} from "@/lib/mock-data";
 import type { Advisor, Messenger, Donation, Donor } from '@/lib/mock-data';
 
 const reportSchema = z.object({
@@ -45,70 +49,19 @@ export default function RelatoriosPage() {
   const [chartData, setChartData] = useState<any[] | null>(null);
   const [chartTitle, setChartTitle] = useState('');
   
-  // Firestore data
-  const [donations, setDonations] = useState<Donation[]>([]);
-  const [donors, setDonors] = useState<Donor[]>([]);
-  const [advisors, setAdvisors] = useState<Advisor[]>([]);
-  const [messengers, setMessengers] = useState<Messenger[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Local Data
+  const [donations, setDonations] = useState<Donation[]>(mockDonations);
+  const [donors, setDonors] = useState<Donor[]>(mockDonors);
+  const [advisors, setAdvisors] = useState<Advisor[]>(mockAdvisors);
+  const [messengers, setMessengers] = useState<Messenger[]>(mockMessengers);
   
   // Settings
   const [closingDay, setClosingDay] = useState('5');
 
-  useEffect(() => {
-    setLoading(true);
-    let loadedCount = 0;
-    const totalToLoad = 5; // donations, donors, advisors, messengers, settings
-    const doneLoading = () => {
-        loadedCount++;
-        if (loadedCount === totalToLoad) {
-            setLoading(false);
-        }
-    };
-
-    const fetchSettings = async () => {
-        try {
-            const settingsRef = doc(db, "system_settings", "general");
-            const settingsSnap = await getDoc(settingsRef);
-            if (settingsSnap.exists()) {
-                setClosingDay(settingsSnap.data().closingDay || '5');
-            }
-        } catch (error) {
-            console.error("Error fetching settings, using default.", error);
-        }
-        doneLoading();
-    };
-    fetchSettings();
-
-    const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
-      setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
-      doneLoading();
-    });
-    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
-        setDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donor)));
-        doneLoading();
-    });
-    const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
-      setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
-      doneLoading();
-    });
-    const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
-      setMessengers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Messenger)));
-      doneLoading();
-    });
-
-    return () => {
-      unsubDonations();
-      unsubDonors();
-      unsubAdvisors();
-      unsubMessengers();
-    };
-  }, []);
-
-  const allCollaborators = [
+  const allCollaborators = useMemo(() => [
     ...advisors.map(a => ({ id: a.id, name: a.name, type: 'Assessor' as const })),
     ...messengers.map(m => ({ id: m.id, name: m.name, type: 'Mensageiro' as const })),
-  ];
+  ], [advisors, messengers]);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
@@ -219,7 +172,7 @@ export default function RelatoriosPage() {
       startY: finalY + 10,
       head: [['Data Pag.', 'Doador', 'Valor da Doação']],
       body: donationsInPeriod.map(d => [
-        d.paymentDate ? format(new Date(d.paymentDate), 'dd/MM/yyyy') : '-',
+        d.paymentDate ? format(new Date(`${d.paymentDate}T00:00:00Z`), 'dd/MM/yyyy') : '-',
         d.donorName,
         formatCurrency(d.amount),
       ]),
@@ -269,106 +222,102 @@ export default function RelatoriosPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? <p>Carregando dados...</p> : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <fieldset disabled={loading}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <FormField
-                      control={form.control}
-                      name="collaboratorId"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Colaborador</FormLabel>
-                            <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
-                                            {field.value ? allCollaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Buscar colaborador..." />
-                                        <CommandList><CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
-                                        <CommandGroup>
-                                            {allCollaborators.map((c) => (
-                                                <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
-                                                    <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                    {c.name} ({c.type})
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="collaboratorId"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Colaborador</FormLabel>
+                          <Popover open={isCollaboratorPopoverOpen} onOpenChange={setIsCollaboratorPopoverOpen}>
+                              <PopoverTrigger asChild>
+                                  <FormControl>
+                                      <Button variant="outline" role="combobox" className={cn("w-full justify-between", !field.value && "text-muted-foreground")}>
+                                          {field.value ? allCollaborators.find(c => c.id === field.value)?.name : "Selecione o colaborador"}
+                                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                  </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                  <Command>
+                                      <CommandInput placeholder="Buscar colaborador..." />
+                                      <CommandList><CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                                      <CommandGroup>
+                                          {allCollaborators.map((c) => (
+                                              <CommandItem value={`${c.name} ${c.id}`} key={c.id} onSelect={() => { form.setValue("collaboratorId", c.id); setIsCollaboratorPopoverOpen(false); }}>
+                                                  <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                  {c.name} ({c.type})
+                                              </CommandItem>
+                                          ))}
+                                      </CommandGroup>
+                                      </CommandList>
+                                  </Command>
+                              </PopoverContent>
+                          </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name="month"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Mês</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o mês" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {months.map((month) => (
-                                <SelectItem key={month.value} value={month.value}>
-                                  {month.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <FormField
+                    control={form.control}
+                    name="month"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Mês</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o mês" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {months.map((month) => (
+                              <SelectItem key={month.value} value={month.value}>
+                                {month.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name="year"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Ano</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o ano" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {years.map((year) => (
-                                <SelectItem key={year} value={year}>
-                                  {year}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="year"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Ano</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o ano" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {years.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                  <Button type="submit" className="mt-8">
-                    <Download className="mr-2 h-4 w-4" />
-                    Gerar Relatório PDF
-                  </Button>
-                </fieldset>
-              </form>
-            </Form>
-          )}
+                <Button type="submit" className="mt-8">
+                  <Download className="mr-2 h-4 w-4" />
+                  Gerar Relatório PDF
+                </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
       

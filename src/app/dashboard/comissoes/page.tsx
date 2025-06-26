@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CommissionsTable } from "@/components/commissions-table";
@@ -9,12 +9,14 @@ import { ViewCommissionDialog } from "@/components/view-commission-dialog";
 import { PerformanceReportChart } from "@/components/dashboard-charts";
 import { useToast } from "@/hooks/use-toast";
 import { Filter } from "lucide-react";
-import type { Commission, Donation, Advisor, Messenger, Donor } from "@/lib/mock-data";
-import { collection, onSnapshot, doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { addMonths, subMonths, setDate } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  donations as mockDonations,
+  donors as mockDonors,
+  advisors as mockAdvisors,
+  messengers as mockMessengers,
+} from "@/lib/mock-data";
+import type { Commission, Donation, Advisor, Messenger, Donor } from "@/lib/mock-data";
 
 type Collaborator = {
   id: string;
@@ -35,68 +37,15 @@ export default function ComissoesPage() {
 
   const [filters, setFilters] = useState<FilterFormValues>({});
   
-  // Firestore data states
-  const [donations, setDonations] = useState<Donation[]>([]);
-  const [donors, setDonors] = useState<Donor[]>([]);
-  const [advisors, setAdvisors] = useState<Advisor[]>([]);
-  const [messengers, setMessengers] = useState<Messenger[]>([]);
-  const [commissionPayments, setCommissionPayments] = useState<Record<string, CommissionPayment>>({});
-  const [loading, setLoading] = useState(true);
-  const [closingDay, setClosingDay] = useState(5);
-
-  useEffect(() => {
-    setLoading(true);
-    let loadedCount = 0;
-    const totalToLoad = 6; // donations, donors, advisors, messengers, payments, settings
-    const doneLoading = () => {
-      loadedCount++;
-      if (loadedCount === totalToLoad) {
-        setLoading(false);
-      }
-    };
-
-    const unsubDonations = onSnapshot(collection(db, "donations"), (snapshot) => {
-      setDonations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donation)));
-      doneLoading();
-    });
-    const unsubDonors = onSnapshot(collection(db, "donors"), (snapshot) => {
-        setDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Donor)));
-        doneLoading();
-    });
-    const unsubAdvisors = onSnapshot(collection(db, "advisors"), (snapshot) => {
-      setAdvisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advisor)));
-      doneLoading();
-    });
-    const unsubMessengers = onSnapshot(collection(db, "messengers"), (snapshot) => {
-      setMessengers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Messenger)));
-      doneLoading();
-    });
-    const unsubPayments = onSnapshot(collection(db, "commission_payments"), (snapshot) => {
-        const payments: Record<string, CommissionPayment> = {};
-        snapshot.forEach(doc => {
-            payments[doc.id] = doc.data() as CommissionPayment;
-        });
-        setCommissionPayments(payments);
-        doneLoading();
-    });
-    const fetchSettings = async () => {
-        const settingsRef = doc(db, "system_settings", "general");
-        const settingsSnap = await getDoc(settingsRef);
-        if (settingsSnap.exists()) {
-            setClosingDay(parseInt(settingsSnap.data().closingDay || '5', 10));
-        }
-        doneLoading();
-    };
-    fetchSettings();
+  // Local state for data
+  const [donations, setDonations] = useState<Donation[]>(mockDonations);
+  const [donors, setDonors] = useState<Donor[]>(mockDonors);
+  const [advisors, setAdvisors] = useState<Advisor[]>(mockAdvisors);
+  const [messengers, setMessengers] = useState<Messenger[]>(mockMessengers);
   
-    return () => {
-      unsubDonations();
-      unsubDonors();
-      unsubAdvisors();
-      unsubMessengers();
-      unsubPayments();
-    };
-  }, []);
+  // In-memory simulation of payments
+  const [commissionPayments, setCommissionPayments] = useState<Record<string, CommissionPayment>>({});
+  const [closingDay, setClosingDay] = useState(5);
 
   const allCollaborators: Collaborator[] = useMemo(() => [
     ...advisors.map(a => ({ id: a.id, name: a.name, type: 'Assessor' as const })),
@@ -104,7 +53,6 @@ export default function ComissoesPage() {
   ], [advisors, messengers]);
 
   const commissionsData: Commission[] = useMemo(() => {
-    if (loading) return [];
     const monthlyResults: { [key: string]: any } = {};
 
     donations.forEach(donation => {
@@ -195,7 +143,7 @@ export default function ComissoesPage() {
         maxCommissionPercentage: advisorDetails?.maxCommissionPercentage,
       };
     });
-  }, [donations, donors, advisors, messengers, allCollaborators, commissionPayments, loading, closingDay]);
+  }, [donations, donors, advisors, messengers, allCollaborators, commissionPayments, closingDay]);
 
   const { filteredCommissions, chartData, chartTitle, chartDescription } = useMemo(() => {
     let filteredData = commissionsData;
@@ -273,15 +221,18 @@ export default function ComissoesPage() {
 
   const handleMarkAsPaid = async (commissionId: string) => {
     try {
-        await setDoc(doc(db, "commission_payments", commissionId), {
-            status: 'Paga',
-            paymentDate: new Date().toISOString().split('T')[0],
-        });
+        setCommissionPayments(prev => ({
+            ...prev,
+            [commissionId]: {
+                status: 'Paga',
+                paymentDate: new Date().toISOString().split('T')[0],
+            }
+        }));
         toast({
             title: 'Comissão Paga',
             description: 'A comissão foi marcada como paga com sucesso.',
         });
-        setIsCommissionDialogOpen(false); // Close dialog on success
+        setIsCommissionDialogOpen(false);
     } catch (error) {
         console.error("Error marking commission as paid: ", error);
         toast({
@@ -316,8 +267,7 @@ export default function ComissoesPage() {
             <CardDescription>{chartDescription}</CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? <Skeleton className="h-[250px] w-full" /> 
-            : chartData && chartData.length > 0 ? (
+            {chartData && chartData.length > 0 ? (
                 <PerformanceReportChart data={chartData} />
             ) : (
                 <div className="flex items-center justify-center h-[250px] text-muted-foreground">
@@ -329,41 +279,7 @@ export default function ComissoesPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-             {loading ? (
-              <div className="p-4">
-                <Table>
-                  <TableHeader>
-                      <TableRow>
-                          <TableHead><Skeleton className="h-5 w-[100px]" /></TableHead>
-                          <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
-                          <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
-                          <TableHead className="hidden md:table-cell text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
-                          <TableHead className="hidden md:table-cell text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
-                          <TableHead className="hidden sm:table-cell text-right"><Skeleton className="h-5 w-[60px] ml-auto" /></TableHead>
-                          <TableHead className="text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
-                          <TableHead className="hidden sm:table-cell text-center"><Skeleton className="h-5 w-[80px] mx-auto" /></TableHead>
-                          <TableHead><span className="sr-only">Ações</span></TableHead>
-                      </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                      {[...Array(5)].map((_, i) => (
-                          <TableRow key={i}>
-                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                              <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                              <TableCell><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                              <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full mx-auto" /></TableCell>
-                              <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
-                          </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-             ) 
-             : <CommissionsTable data={filteredCommissions} onEdit={handleView} />}
+             <CommissionsTable data={filteredCommissions} onEdit={handleView} />
           </CardContent>
         </Card>
       </div>

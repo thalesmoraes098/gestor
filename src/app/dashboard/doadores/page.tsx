@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonorsTable } from "@/components/donors-table";
@@ -9,60 +9,21 @@ import { AddDonorDialog } from "@/components/add-donor-dialog";
 import { Filter, PlusCircle } from "lucide-react";
 import type { Donor } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
-import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { donors as mockDonors, advisors as mockAdvisors } from "@/lib/mock-data";
 
 export default function DoadoresPage() {
   const { toast } = useToast();
-  const [donors, setDonors] = useState<Donor[]>([]);
-  const [advisors, setAdvisors] = useState<{ id: string; name: string; }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [donors, setDonors] = useState<Donor[]>(mockDonors);
+  const [advisors, setAdvisors] = useState<{ id: string; name: string; }[]>(mockAdvisors.map(a => ({ id: a.id, name: a.name })));
   const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
   
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isDonorDialogOpen, setIsDonorDialogOpen] = useState(false);
   const [donorToEdit, setDonorToEdit] = useState<Donor | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribeDonors = onSnapshot(collection(db, "donors"), (querySnapshot) => {
-      const donorsData: Donor[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        donorsData.push({ 
-          id: doc.id, 
-          ...data,
-          history: data.history || [],
-          phones: data.phones || [],
-          addresses: data.addresses || [],
-        } as Donor);
-      });
-      setDonors(donorsData);
-      setLoading(false);
-    });
-    
-    const unsubscribeAdvisors = onSnapshot(collection(db, "advisors"), (querySnapshot) => {
-      const advisorsData: { id: string; name: string; }[] = [];
-      querySnapshot.forEach((doc) => {
-        if (doc.data().status === 'Ativo') {
-          advisorsData.push({ id: doc.id, name: doc.data().name });
-        }
-      });
-      setAdvisors(advisorsData);
-    });
-
-    return () => {
-      unsubscribeDonors();
-      unsubscribeAdvisors();
-    };
-  }, []);
-
   const advisorNames = useMemo(() => advisors.map(a => a.name), [advisors]);
 
   const filteredDonors = useMemo(() => {
-    if (loading) return [];
     return donors.filter(donor => {
       let matches = true;
       if (filters.status && filters.status !== 'todos') {
@@ -87,7 +48,7 @@ export default function DoadoresPage() {
       }
       return matches;
     });
-  }, [donors, filters, loading]);
+  }, [donors, filters]);
 
   const handleApplyFilters = (newFilters: FilterFormValues) => {
     setFilters(newFilters);
@@ -105,20 +66,11 @@ export default function DoadoresPage() {
 
   const handleDelete = async (donorId: string) => {
     if (window.confirm('Tem certeza de que deseja excluir este doador? Todos os dados associados serão perdidos permanentemente.')) {
-        try {
-            await deleteDoc(doc(db, "donors", donorId));
-            toast({
-                title: 'Doador Excluído',
-                description: 'O doador foi removido com sucesso.',
-            });
-        } catch (error) {
-            console.error("Error deleting donor: ", error);
-            toast({
-              variant: "destructive",
-              title: 'Erro ao Excluir',
-              description: 'Não foi possível excluir o doador.',
-            });
-        }
+        setDonors(donors.filter(d => d.id !== donorId));
+        toast({
+            title: 'Doador Excluído',
+            description: 'O doador foi removido com sucesso.',
+        });
     }
   };
 
@@ -128,19 +80,17 @@ export default function DoadoresPage() {
 
     try {
       if (isEditing) {
-          const donorId = data.id!;
-          const { id, ...dataToUpdate } = data;
-          await updateDoc(doc(db, "donors", donorId), dataToUpdate);
+          setDonors(donors.map(d => d.id === data.id ? { ...d, ...data } : d));
           toast({ title: 'Doador Atualizado', description: 'Os dados do doador foram atualizados.' });
       } else {
-          const newDonorData = { 
+          const newDonor: Donor = { 
               ...data,
+              id: `donor_${Date.now()}`,
               amount: 0,
               joinDate: new Date().toISOString().split('T')[0],
               history: [],
           };
-          const { id, ...dataToCreate } = newDonorData as any;
-          await addDoc(collection(db, "donors"), dataToCreate);
+          setDonors([...donors, newDonor]);
           toast({ title: 'Doador Adicionado', description: 'O novo doador foi registrado com sucesso.' });
       }
     } catch (error) {
@@ -151,6 +101,7 @@ export default function DoadoresPage() {
           description: 'Não foi possível salvar os dados do doador.',
         });
     }
+    setDonorToEdit(null);
   };
 
   const handleDialogChange = (open: boolean) => {
@@ -184,38 +135,7 @@ export default function DoadoresPage() {
 
         <Card className="rounded-2xl border-0 shadow-lg">
           <CardContent className="p-0">
-            {loading ? (
-              <div className="p-4">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[120px]"><Skeleton className="h-5 w-full" /></TableHead>
-                            <TableHead><Skeleton className="h-5 w-[150px]" /></TableHead>
-                            <TableHead><Skeleton className="h-5 w-[80px]" /></TableHead>
-                            <TableHead className="hidden md:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
-                            <TableHead className="hidden md:table-cell text-right"><Skeleton className="h-5 w-[100px] ml-auto" /></TableHead>
-                            <TableHead className="hidden sm:table-cell"><Skeleton className="h-5 w-[100px]" /></TableHead>
-                            <TableHead><span className="sr-only">Ações</span></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {[...Array(5)].map((_, i) => (
-                            <TableRow key={i}>
-                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-full ml-auto" /></TableCell>
-                                <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-full" /></TableCell>
-                                <TableCell className="text-right"><Skeleton className="h-6 w-6 ml-auto" /></TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <DonorsTable data={filteredDonors} onEdit={handleEdit} onDelete={handleDelete} />
-            )}
+            <DonorsTable data={filteredDonors} onEdit={handleEdit} onDelete={handleDelete} />
           </CardContent>
         </Card>
       </div>

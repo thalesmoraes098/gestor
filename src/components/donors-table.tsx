@@ -32,9 +32,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MoreHorizontal, Pencil, Trash2, History, Download } from 'lucide-react';
 import type { Donor, Donation } from '@/lib/mock-data';
+import { donations as mockDonations } from '@/lib/mock-data';
 import type { VariantProps } from 'class-variance-authority';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 const statusVariantMap: Record<Donor['status'], VariantProps<typeof badgeVariants>['variant']> = {
   Ativo: 'default',
@@ -59,7 +58,8 @@ const formatCurrency = (value: number) => {
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('pt-BR', {
+  // Add a time component to ensure the date is parsed in UTC
+  return new Date(`${dateString}T00:00:00Z`).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -69,14 +69,11 @@ const formatDate = (dateString?: string) => {
 
 const escapeCsvCell = (cell: any): string => {
     const strCell = String(cell === null || cell === undefined ? '' : cell);
-    // If the cell contains a comma, double quotes, or a newline, wrap it in double quotes.
     if (/[",\n]/.test(strCell)) {
-        // Also, escape any existing double quotes by doubling them.
         return `"${strCell.replace(/"/g, '""')}"`;
     }
     return strCell;
 };
-
 
 export function DonorsTable({ 
     data, 
@@ -92,16 +89,12 @@ export function DonorsTable({
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchHistory = () => {
       if (historyDonor) {
         setLoadingHistory(true);
-        const q = query(collection(db, 'donations'), where('donorCode', '==', historyDonor.code));
-        const querySnapshot = await getDocs(q);
-        const history: Donation[] = [];
-        querySnapshot.forEach((doc) => {
-          history.push({ id: doc.id, ...doc.data() } as Donation);
-        });
-        history.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+        const history = mockDonations
+          .filter(d => d.donorCode === historyDonor.code)
+          .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
         setDonationHistory(history);
         setLoadingHistory(false);
       }

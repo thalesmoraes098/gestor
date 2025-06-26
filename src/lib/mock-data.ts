@@ -1,3 +1,5 @@
+'use client';
+
 // Types
 export type Advisor = {
   id: string;
@@ -34,8 +36,8 @@ export type Donor = {
   joinDate: string;
   isLoyal: boolean;
   paymentDay?: string;
-  phones: { value: string }[];
-  addresses: {
+  phones?: { value: string }[];
+  addresses?: {
     cep: string;
     street: string;
     number: string;

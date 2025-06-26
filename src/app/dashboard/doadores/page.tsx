@@ -7,7 +7,7 @@ import { DonorsTable } from "@/components/donors-table";
 import { DonorsFilterDialog, type FilterFormValues } from "@/components/donors-filter-dialog";
 import { AddDonorDialog } from "@/components/add-donor-dialog";
 import { Filter, PlusCircle } from "lucide-react";
-import type { Donor, Advisor } from "@/lib/mock-data";
+import type { Donor } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export default function DoadoresPage() {
   const { toast } = useToast();
   const [donors, setDonors] = useState<Donor[]>([]);
-  const [advisors, setAdvisors] = useState<Pick<Advisor, 'id' | 'name'>[]>([]);
+  const [advisors, setAdvisors] = useState<{ id: string; name: string; }[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterFormValues>({ status: 'todos' });
   
@@ -44,7 +44,7 @@ export default function DoadoresPage() {
     });
     
     const unsubscribeAdvisors = onSnapshot(collection(db, "advisors"), (querySnapshot) => {
-      const advisorsData: Pick<Advisor, 'id' | 'name'>[] = [];
+      const advisorsData: { id: string; name: string; }[] = [];
       querySnapshot.forEach((doc) => {
         if (doc.data().status === 'Ativo') {
           advisorsData.push({ id: doc.id, name: doc.data().name });

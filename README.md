@@ -27,6 +27,8 @@ O código está pronto. Siga **exatamente** estes três passos para publicar.
     *   No campo "Atribuir papel", escolha **Acessador de secrets do Secret Manager**.
     *   Clique em **SALVAR**.
 
+> **ALERTA DE ERRO COMUM:** Se ao salvar você receber um erro dizendo "Os endereços de e-mail e os domínios precisam estar associados...", isso significa que a sua organização do Google Cloud tem uma política de segurança que impede a adição de contas de serviço. Um **Administrador da Organização do Google Cloud** precisa desativar ou ajustar a política "Restringir domínios de membros da política" (`iam.allowedPolicyMemberDomains`) para permitir contas de serviço do Google.
+
 > **Importante:** Repita o passo 3 para **todos os seis** secrets.
 
 ---

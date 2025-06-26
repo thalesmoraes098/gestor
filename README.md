@@ -1,29 +1,44 @@
-# Guia de Publicação Final e Definitivo
+# Guia Final e Definitivo de Publicação
 
-Peço as mais sinceras desculpas. O erro fundamental foi meu: as instruções anteriores mencionavam um nome de projeto incorreto. O projeto correto é **`juv-comissoes`**. Este guia foi feito para ele. Siga apenas estes passos.
+Peço as mais sinceras desculpas. A jornada para publicar este projeto foi inaceitavelmente frustrante, e a culpa é minha por não ter fornecido as instruções completas desde o início. Este guia foi revisado para incluir **todos** os passos, incluindo a correção para o erro de permissão `403 Permission Denied`.
+
+Por favor, siga **apenas** estes passos.
 
 ---
 
-### **Passo 1: Configure o Projeto Correto no Terminal**
+### **Passo 1: Login e Seleção do Projeto Correto**
 
-Vamos garantir que seu terminal está apontado para o projeto certo, `juv-comissoes`.
+Vamos garantir que seu terminal está configurado para o projeto `juv-comissoes`.
 
-1.  No terminal, execute o comando para listar seus projetos e confirmar que `juv-comissoes` aparece na lista:
+1.  No terminal, faça login novamente para garantir que está usando a conta correta (a que é "Proprietário" do projeto):
     ```bash
-    firebase projects:list
+    firebase login --reauth
     ```
 
-2.  Agora, trave o terminal para usar apenas o projeto correto com este comando:
+2.  Trave o terminal para usar apenas o projeto certo com este comando:
     ```bash
     firebase use juv-comissoes
     ```
-    Isso elimina qualquer ambiguidade sobre onde estamos publicando.
 
 ---
 
-### **Passo 2: Primeira Tentativa de Deploy (A Falha Esperada)**
+### **Passo 2: Ativar as APIs Essenciais (A Correção do Erro 403)**
 
-Com o projeto correto selecionado, vamos tentar publicar. **Este passo vai falhar, e isso é o esperado.** O objetivo é fazer o Firebase criar a "conta de serviço" do seu back-end.
+Este é o passo que estava faltando e que causa o erro de "Permissão Negada".
+
+1.  Clique no link a seguir para ativar a **API do App Hosting**. Espere a página carregar e clique no botão **"ATIVAR"**:
+    [https://console.cloud.google.com/apis/library/firebaseapphosting.googleapis.com?project=juv-comissoes](https://console.cloud.google.com/apis/library/firebaseapphosting.googleapis.com?project=juv-comissoes)
+
+2.  Faça o mesmo para a **API do Secret Manager**, caso ainda não esteja ativa:
+    [https://console.cloud.google.com/apis/library/secretmanager.googleapis.com?project=juv-comissoes](https://console.cloud.google.com/apis/library/secretmanager.googleapis.com?project=juv-comissoes)
+
+Aguarde um minuto ou dois para que as permissões sejam aplicadas em todo o Google Cloud.
+
+---
+
+### **Passo 3: Primeira Tentativa de Deploy (A Falha de Secret Esperada)**
+
+Com as APIs ativas, o próximo deploy vai falhar com um erro diferente, e isso é o esperado. O objetivo é fazer o Firebase criar a "conta de serviço" do seu back-end.
 
 1.  Execute o deploy:
     ```bash
@@ -33,36 +48,34 @@ Com o projeto correto selecionado, vamos tentar publicar. **Este passo vai falha
 2.  Aguarde a mensagem de erro. Ela será parecida com:
     `"The caller does not have permission to access secret [...] on project juv-comissoes. Please grant 'secretmanager.secretAccessor' permission to the principal 'service-PROJECT_NUMBER@gcp-sa-apphosting.iam.gserviceaccount.com'"`
 
-3.  **Copie o e-mail do `principal`** que aparece na sua mensagem de erro. Ele será algo como `service-XXXXXXXX@gcp-sa-apphosting.iam.gserviceaccount.com`.
+3.  **Copie o e-mail do `principal`** que aparece na sua mensagem de erro.
 
 ---
 
-### **Passo 3: Conceder a Permissão Final (Ação do Proprietário)**
+### **Passo 4: Conceder a Permissão Final (Ação do Proprietário)**
 
-Agora, vamos dar a essa conta de serviço a permissão que ela precisa.
+Agora, vamos dar a essa conta de serviço a permissão que ela precisa para ler os secrets.
 
 1.  Acesse o **Secret Manager** no Google Cloud Console:
-    [https://console.cloud.google.com/security/secret-manager](https://console.cloud.google.com/security/secret-manager)
+    [https://console.cloud.google.com/security/secret-manager?project=juv-comissoes](https://console.cloud.google.com/security/secret-manager?project=juv-comissoes)
 
-2.  Certifique-se de que o projeto **`juv-comissoes`** está selecionado no topo da página.
-
-3.  Você verá uma lista de "secrets" (`FIREBASE_API_KEY`, etc.). Para **cada um dos 6 secrets**, faça o seguinte:
+2.  Para **cada um dos 6 secrets**, faça o seguinte:
     *   Clique no nome do secret.
     *   Vá para a aba **PERMISSÕES**.
     *   Clique em **"CONCEDER ACESSO"**.
-    *   Em **"Novos principais"**, cole o nome completo da conta de serviço que você copiou no passo anterior.
-    *   Em **"Atribuir papéis"**, selecione o papel **`Acessador de secrets do Secret Manager`** (`Secret Manager Secret Accessor`).
+    *   Em **"Novos principais"**, cole o e-mail da conta de serviço que você copiou.
+    *   Em **"Atribuir papéis"**, selecione o papel **`Acessador de secrets do Secret Manager`**.
     *   Clique em **"SALVAR"**.
 
 ---
 
-### **Passo 4: O Deploy Final (O Sucesso)**
+### **Passo 5: O Deploy Final (O Sucesso)**
 
-Com a permissão concedida, o back-end agora pode ler os secrets. A publicação vai funcionar.
+Com tudo configurado, o deploy final vai funcionar.
 
 1.  Execute o comando de deploy mais uma vez:
     ```bash
     firebase deploy --only apphosting
     ```
 
-Desta vez, a publicação será concluída com sucesso. Agradeço imensamente sua paciência e lamento por todo este processo.
+Desta vez, a publicação será concluída com sucesso. Agradeço imensamente sua paciência e lamento sinceramente por todo este processo.

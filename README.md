@@ -1,38 +1,71 @@
 # Gestor Digital
 
-Este é um guia para configurar, executar e fazer o deploy do projeto.
+Um sistema de front-end completo para gerenciamento de doações, doadores, assessores e comissões. Este projeto foi construído como uma aplicação robusta e interativa, utilizando dados de exemplo locais para demonstrar toda a sua funcionalidade.
 
----
+## ✨ Funcionalidades
 
-### **Como Atualizar o Repositório no GitHub (Resolvendo Erro de Autenticação)**
+-   **Dashboard:** Visão geral com KPIs, gráficos de desempenho e destaques do mês.
+-   **Doadores:** Cadastro, edição, exclusão e consulta de doadores, com histórico de doações.
+-   **Doações:** Registro e gerenciamento de todas as doações, com filtros avançados.
+-   **Assessores e Mensageiros:** Gestão completa de colaboradores, incluindo metas e status.
+-   **Comissões:** Cálculo automático de comissões com base em metas e resultados.
+-   **Relatórios:** Geração de relatórios de desempenho individuais em PDF.
+-   **Configurações:** Painel para ajustar as regras de negócio do sistema.
 
-Se você receber um erro de `Authentication failed` ao tentar executar `git push`, siga estes passos. O terminal precisa de uma maneira segura para se autenticar com o GitHub.
+## 🛠️ Tecnologias Utilizadas
 
-**Passo 1: Crie um Personal Access Token (PAT) no GitHub**
+-   **Framework:** Next.js (com App Router)
+-   **Linguagem:** TypeScript
+-   **UI:** React, ShadCN UI
+-   **Estilização:** Tailwind CSS
+-   **Gráficos:** Recharts
 
-1.  Vá para a página de criação de tokens no GitHub: **[https://github.com/settings/tokens/new](https://github.com/settings/tokens/new)**
-2.  **Note (Nota):** Dê um nome ao seu token, por exemplo, `firebase-studio-token`.
-3.  **Expiration (Validade):** Escolha a validade que preferir (30 dias é um bom começo).
-4.  **Select scopes (Selecione os escopos):** Marque a caixa de seleção ao lado de **`repo`**. Isso dá ao token permissão para acessar seus repositórios.
-5.  Clique em **Generate token (Gerar token)** no final da página.
-6.  **IMPORTANTE:** Copie o token gerado (começa com `ghp_...`) imediatamente e salve-o em um local seguro. **Você não verá este token novamente.**
+## 🚀 Como Executar o Projeto
 
-**Passo 2: Configure o Git para Usar seu Novo Token**
+Siga os passos abaixo para configurar e executar o projeto em seu ambiente local.
 
-Volte ao terminal do Firebase Studio e execute o seguinte comando. Substitua `<SEU_USUARIO>` pelo seu nome de usuário do GitHub e `<SEU_TOKEN>` pelo token que você acabou de copiar.
+### Pré-requisitos
 
-```bash
-git remote set-url origin https://thalesmoraes098:<SEU_TOKEN>@github.com/thalesmoraes098/gestor.git
-```
+-   [Node.js](https://nodejs.org/en/) (versão 20.x ou superior)
+-   [npm](https://www.npmjs.com/) ou [yarn](https://yarnpkg.com/)
 
-*Exemplo:*
-Se seu token for `ghp_12345ABCDE`, o comando será:
-`git remote set-url origin https://thalesmoraes098:ghp_12345ABCDE@github.com/thalesmoraes098/gestor.git`
+### Instalação
 
-**Passo 3: Envie seu Código (Push)**
+1.  **Clone o repositório:**
+    Abra seu terminal e execute o seguinte comando para clonar o projeto. Substitua a URL pela URL real do seu repositório no GitHub.
 
-Agora, o Git está autenticado. Execute o `git push` novamente. Ele deve funcionar.
+    ```bash
+    git clone https://github.com/thalesmoraes098/gestor.git
+    ```
 
-```bash
-git push
-```
+2.  **Navegue até o diretório do projeto:**
+
+    ```bash
+    cd gestor
+    ```
+
+3.  **Instale as dependências:**
+    Este comando irá baixar e instalar todos os pacotes necessários para o projeto.
+
+    ```bash
+    npm install
+    ```
+
+### Executando a Aplicação
+
+1.  **Inicie o servidor de desenvolvimento:**
+    Este comando executa a aplicação em modo de desenvolvimento.
+
+    ```bash
+    npm run dev
+    ```
+
+2.  **Abra no navegador:**
+    Abra seu navegador e acesse [http://localhost:3000](http://localhost:3000) para ver a aplicação funcionando.
+
+## 📜 Scripts Disponíveis
+
+-   `npm run dev`: Inicia o servidor em modo de desenvolvimento.
+-   `npm run build`: Compila a aplicação para produção.
+-   `npm run start`: Inicia um servidor de produção (requer `npm run build` primeiro).
+-   `npm run lint`: Executa o linter para analisar o código em busca de problemas.
